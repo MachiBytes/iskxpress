@@ -15,8 +15,8 @@ class UserHomePageContent extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+            topLeft: Radius.circular(8),
+            topRight: Radius.circular(8),
           ),
         ),
         child: Column(

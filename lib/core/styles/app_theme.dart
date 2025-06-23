@@ -33,7 +33,26 @@ final ThemeData kAppTheme = ThemeData(
     labelLarge: TextStyle(
       fontSize: 20,
       color: TColors.textPrimary
-    )
+    ),
+    bodyLarge: TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      color: TColors.textPrimary
+    ),
+    bodyMedium: TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      color: TColors.textPrimary
+    ),
+    bodySmall: TextStyle(
+      fontSize: 12,
+      color: TColors.textPrimary
+    ),
+    titleMedium: TextStyle(
+      fontSize: 24,
+      fontWeight: FontWeight.w800,
+      color: TColors.textPrimary
+    ),
   ),
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
