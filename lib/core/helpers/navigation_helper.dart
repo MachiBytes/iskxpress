@@ -9,7 +9,15 @@ import 'package:flutter/material.dart';
 }
 
 class NavHelper {
-  static void navigateTo(BuildContext context, Widget page) {
+  static void replacePageTo(BuildContext context, Widget page) {
     Navigator.pushReplacement(context, noAnimationRoute(page));
+  }
+
+  static void pushPageTo(BuildContext context, Widget page) {
+    Navigator.push(context, noAnimationRoute(page));
+  }
+
+  static void popPage(BuildContext context) {
+    Navigator.pop(context);
   }
 }

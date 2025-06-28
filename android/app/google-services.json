@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1040206200374",
+    "project_id": "iskxpress",
+    "storage_bucket": "iskxpress.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1040206200374:android:db18cddd45345d49256297",
+        "android_client_info": {
+          "package_name": "com.example.iskxpress"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1040206200374-eef641ag049u8ka9bgim6qoj5rrse21l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.iskxpress",
+            "certificate_hash": "705c62d1410f5c55c44360819ee090147a7bc47d"
+          }
+        },
+        {
+          "client_id": "1040206200374-kmdhj6c61t2k45jm5misi99iq4rj938g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNyfprUVBvsfHxokOmwNhYzG4aKraFRBE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1040206200374-kmdhj6c61t2k45jm5misi99iq4rj938g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

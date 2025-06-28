@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
+import 'package:iskxpress/presentation/pages/vendor_home/vendor_home_page.dart';
 import 'package:iskxpress/presentation/pages/deliveries/deliveries_page.dart';
 import 'package:iskxpress/presentation/pages/user_profile/user_profile_page.dart';
 import 'package:iskxpress/core/helpers/navigation_helper.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class VendorBottomNavBar extends StatelessWidget {
   final int currentIndex;
 
-  const CustomBottomNavBar({super.key, required this.currentIndex});
+  const VendorBottomNavBar({super.key, required this.currentIndex});
 
   void _onItemTapped(BuildContext context, int index) {
     if (index == currentIndex) return;
 
     switch (index) {
       case 0:
-        NavHelper.replacePageTo(context, const UserHomePage());
+        NavHelper.replacePageTo(context, const VendorHomePage());
         break;
       case 1:
         NavHelper.replacePageTo(context, const DeliveriesPage());
@@ -35,7 +35,7 @@ class CustomBottomNavBar extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).shadowColor,
-            blurRadius: 10, // Adjust blur for desired softness
+            blurRadius: 10,
             offset: const Offset(0, -1)
           ),
         ],
@@ -44,8 +44,8 @@ class CustomBottomNavBar extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: (index) => _onItemTapped(context, index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.trolley), label: 'Deliveries'),
+          BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Menu'),
+          BottomNavigationBarItem(icon: Icon(Icons.delivery_dining), label: 'Orders'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         backgroundColor: Colors.transparent,
@@ -55,4 +55,4 @@ class CustomBottomNavBar extends StatelessWidget {
       ),
     );
   }
-}
+} 

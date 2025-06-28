@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:iskxpress/presentation/pages/user_profile/widgets/get_verified_button.dart';
 import 'package:iskxpress/presentation/pages/user_profile/widgets/user_profile_picture.dart';
 
@@ -9,6 +10,7 @@ class UserProfileTopSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final user = FirebaseAuth.instance.currentUser;
     
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -26,7 +28,7 @@ class UserProfileTopSection extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Mark Achiles G. Flores Jr.',
+                      user?.displayName ?? 'User Name',
                       softWrap: true,
                       style: textTheme.bodyLarge?.copyWith(
                         color: colorScheme.onPrimary,
@@ -34,9 +36,11 @@ class UserProfileTopSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Unverified',
+                      user?.emailVerified == true ? 'Verified' : 'Unverified',
                       style: textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onPrimary,
+                        color: user?.emailVerified == true 
+                            ? Colors.green 
+                            : colorScheme.onPrimary,
                       ),
                     ),
                   ],
@@ -51,7 +55,7 @@ class UserProfileTopSection extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'juansdelacruz@iskolarngbayan.pup.edu.ph',
+                  user?.email ?? 'No email available',
                   style: textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onPrimary,
                   ),
