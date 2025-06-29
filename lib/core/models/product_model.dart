@@ -39,7 +39,7 @@ class ProductModel {
       basePrice: (json['basePrice'] ?? 0.0).toDouble(),
       sectionId: json['sectionId'] ?? 0,
       categoryId: json['categoryId'],
-      imageUrl: json['imageUrl'],
+      imageUrl: json['pictureUrl'] ?? json['imageUrl'], // Try pictureUrl first, fallback to imageUrl
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
     );
