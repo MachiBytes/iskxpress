@@ -2,12 +2,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:iskxpress/core/services/user_state_service.dart';
+import 'package:iskxpress/core/services/stall_state_service.dart';
 
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   final UserStateService _userStateService = UserStateService();
+  final StallStateService _stallStateService = StallStateService();
 
   // Allowed email domains for Microsoft Sign-In
   static const List<String> _allowedDomains = [
@@ -97,7 +99,7 @@ class AuthService {
         await signOut(); // Sign out immediately
         throw Exception('DOMAIN_NOT_ALLOWED: Only @iskolarngbayan.pup.edu.ph and @pup.edu.ph email addresses are allowed.');
       }
-
+      
       if (kDebugMode) debugPrint('AuthService: Domain check passed for: ${user.email}');
       
       return result;
@@ -117,9 +119,10 @@ class AuthService {
     try {
       if (kDebugMode) debugPrint('AuthService: Starting sign out process...');
       
-      // Clear user state first
+      // Clear user and stall state first
       _userStateService.clearUser();
-      if (kDebugMode) debugPrint('AuthService: User state cleared');
+      _stallStateService.clearStall();
+      if (kDebugMode) debugPrint('AuthService: User and stall state cleared');
       
       // Sign out from Google if signed in
       if (await _googleSignIn.isSignedIn()) {
@@ -143,8 +146,9 @@ class AuthService {
     try {
       final User? user = currentUser;
       if (user != null) {
-        // Clear user state first
+        // Clear user and stall state first
         _userStateService.clearUser();
+        _stallStateService.clearStall();
         
         await _googleSignIn.disconnect();
         await user.delete();

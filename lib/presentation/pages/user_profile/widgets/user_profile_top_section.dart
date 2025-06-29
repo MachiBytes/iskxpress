@@ -83,62 +83,62 @@ class _UserProfileTopSectionState extends State<UserProfileTopSection> {
             ),
           );
         }
-        
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
                   UserProfilePicture(pictureUrl: user.pictureUrl),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
                           user.name,
-                          softWrap: true,
-                          style: textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          user.verified ? 'Verified' : 'Unverified',
-                          style: textTheme.bodySmall?.copyWith(
-                            color: user.verified 
-                                ? Colors.green 
-                                : colorScheme.onPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Icon(Icons.email, color: colorScheme.onPrimary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      user.email,
-                      style: textTheme.bodyMedium?.copyWith(
+                      softWrap: true,
+                      style: textTheme.bodyLarge?.copyWith(
                         color: colorScheme.onPrimary,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                          user.verified ? 'Verified' : 'Unverified',
+                      style: textTheme.bodySmall?.copyWith(
+                            color: user.verified 
+                            ? Colors.green 
+                            : colorScheme.onPrimary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              GetVerifiedButton(isVerified: user.verified),
             ],
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Icon(Icons.email, color: colorScheme.onPrimary),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                      user.email,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+              GetVerifiedButton(isVerified: user.verified),
+        ],
+      ),
         );
       },
     );

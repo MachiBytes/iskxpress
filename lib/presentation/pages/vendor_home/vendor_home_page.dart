@@ -4,6 +4,8 @@ import 'package:iskxpress/core/widgets/vendor_bottom_nav_bar.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/vendor_header.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/product_section.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/add_section_button.dart';
+import '../../../core/services/user_state_service.dart';
+import '../../../core/services/stall_state_service.dart';
 
 class VendorHomePage extends StatefulWidget {
   const VendorHomePage({super.key});
@@ -15,6 +17,22 @@ class VendorHomePage extends StatefulWidget {
 }
 
 class _VendorHomePageState extends State<VendorHomePage> {
+  final StallStateService _stallStateService = StallStateService();
+  final UserStateService _userStateService = UserStateService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStallData();
+  }
+
+  Future<void> _loadStallData() async {
+    final currentUser = _userStateService.currentUser;
+    if (currentUser != null) {
+      await _stallStateService.loadStallForVendor(currentUser.id);
+    }
+  }
+
   // Mock data for demonstration - in real app this would come from a database
   final List<ProductSection> productSections = [
     ProductSection(

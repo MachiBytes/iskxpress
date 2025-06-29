@@ -5,6 +5,7 @@ import 'package:iskxpress/core/styles/app_theme.dart';
 import 'package:iskxpress/presentation/pages/login/login_page.dart';
 import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/vendor_home_page.dart';
+import 'package:iskxpress/core/services/user_state_service.dart';
 
 class MyApp extends StatelessWidget {
   @override
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
           if (kDebugMode) {
             debugPrint('App: Auth state changed - hasData: ${snapshot.hasData}, user: ${snapshot.data?.email}');
           }
-          
+
           // If no user is authenticated, show login page
           // All navigation after login is handled manually via NavHelper
           if (!snapshot.hasData || snapshot.data == null) {
@@ -26,10 +27,30 @@ class MyApp extends StatelessWidget {
             return LoginPage();
           }
           
-          if (kDebugMode) debugPrint('App: User authenticated, showing default home page (manual navigation will handle routing)');
-          // User is authenticated, but we let manual navigation handle the specific routing
-          // Show a default page while manual navigation takes over
-          return UserHomePage(); // This will be overridden by manual navigation
+          // User is authenticated, check their role to determine home page
+          return AnimatedBuilder(
+            animation: UserStateService(),
+            builder: (context, child) {
+              final userStateService = UserStateService();
+              final currentUser = userStateService.currentUser;
+              
+              if (currentUser == null) {
+                if (kDebugMode) debugPrint('App: User authenticated but no user data yet, showing user home as default');
+                // If user data hasn't loaded yet, show user home as default
+                // The login process will handle proper navigation once user data loads
+                return UserHomePage();
+              }
+              
+              // Route based on user role from API
+              if (currentUser.role == 1) {
+                if (kDebugMode) debugPrint('App: User role is Vendor, showing VendorHomePage');
+                return VendorHomePage();
+              } else {
+                if (kDebugMode) debugPrint('App: User role is User, showing UserHomePage');
+                return UserHomePage();
+              }
+            },
+          );
         },
       ),
     );
