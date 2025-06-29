@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import '../vendor_home_page.dart';
+import '../../../../core/models/product_model.dart';
+import '../../../../core/models/section_model.dart';
+import '../../../../core/models/category_model.dart';
 
 class ProductSectionWidget extends StatelessWidget {
-  final ProductSection section;
-  final Function(Product) onEditProduct;
-  final Function(String) onAddProduct;
+  final SectionWithProducts section;
+  final Function(ProductModel) onEditProduct;
+  final Function(ProductModel) onDeleteProduct;
+  final Function(SectionModel) onAddProduct;
+  final Function(SectionModel) onEditSection;
+  final Function(SectionModel) onDeleteSection;
+  final List<CategoryModel> categories;
 
   const ProductSectionWidget({
     super.key,
     required this.section,
     required this.onEditProduct,
+    required this.onDeleteProduct,
     required this.onAddProduct,
+    required this.onEditSection,
+    required this.onDeleteSection,
+    required this.categories,
   });
 
   @override
@@ -23,28 +34,100 @@ class ProductSectionWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Title
-          Text(
-            section.title,
-            style: textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          // Section Title with Edit/Delete options
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  section.section.name,
+                  style: textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) {
+                  switch (value) {
+                    case 'edit':
+                      onEditSection(section.section);
+                      break;
+                    case 'delete':
+                      onDeleteSection(section.section);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 18),
+                        SizedBox(width: 8),
+                        Text('Edit Section'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 18, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete Section', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+                child: Icon(
+                  Icons.more_vert,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
 
           // Products List
-          ...section.products.map((product) => ProductTile(
-            product: product,
-            onEdit: () => onEditProduct(product),
-          )),
+          if (section.products.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 40,
+                    color: Colors.grey[500],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No products in this section',
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ...section.products.map((product) => ProductTile(
+              product: product,
+              categories: categories,
+              onEdit: () => onEditProduct(product),
+              onDelete: () => onDeleteProduct(product),
+            )),
 
           // Add Item Button
           Container(
             width: double.infinity,
             margin: const EdgeInsets.only(top: 12),
             child: ElevatedButton(
-              onPressed: () => onAddProduct(section.title),
+              onPressed: () => onAddProduct(section.section),
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
@@ -68,18 +151,36 @@ class ProductSectionWidget extends StatelessWidget {
 }
 
 class ProductTile extends StatelessWidget {
-  final Product product;
+  final ProductModel product;
+  final List<CategoryModel> categories;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const ProductTile({
     super.key,
     required this.product,
+    required this.categories,
     required this.onEdit,
+    required this.onDelete,
   });
+
+  String? _getCategoryName() {
+    if (product.categoryId == null) return null;
+    
+    try {
+      final category = categories.firstWhere(
+        (cat) => cat.id == product.categoryId,
+      );
+      return category.name;
+    } catch (e) {
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final categoryName = _getCategoryName();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -107,17 +208,23 @@ class ProductTile extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                product.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(
-                    Icons.coffee,
-                    color: Colors.brown[300],
-                    size: 30,
-                  );
-                },
-              ),
+              child: product.imageUrl != null
+                  ? Image.network(
+                      product.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(
+                          Icons.coffee,
+                          color: Colors.brown[300],
+                          size: 30,
+                        );
+                      },
+                    )
+                  : Icon(
+                      Icons.coffee,
+                      color: Colors.brown[300],
+                      size: 30,
+                    ),
             ),
           ),
           const SizedBox(width: 12),
@@ -135,32 +242,81 @@ class ProductTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
+                // Base Price
                 Text(
-                  '₱ ${product.price.toStringAsFixed(2)}',
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: Colors.black54,
+                  'Base: ₱ ${product.basePrice.toStringAsFixed(2)}',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 2),
+                // Selling Price with Markup
+                Text(
+                  'Sell: ₱ ${product.sellingPrice.toStringAsFixed(2)}',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.green[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (categoryName != null) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Text(
+                      categoryName,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: Colors.blue[700],
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
 
-          // Edit Button
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(
-              Icons.edit,
-              color: Colors.grey,
-              size: 20,
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.grey[100],
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+          // Action Buttons
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: onEdit,
+                icon: const Icon(
+                  Icons.edit,
+                  color: Colors.grey,
+                  size: 20,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.grey[100],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                ),
               ),
-              padding: const EdgeInsets.all(8),
-            ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(
+                  Icons.delete,
+                  color: Colors.red,
+                  size: 20,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.red[50],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ],
           ),
         ],
       ),
