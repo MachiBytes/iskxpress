@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
+import 'package:iskxpress/presentation/pages/vendor_home/vendor_home_page.dart';
 import 'package:iskxpress/core/constants/image_strings.dart';
 import 'package:iskxpress/core/helpers/navigation_helper.dart';
 import 'package:iskxpress/core/services/auth_service.dart';
+import 'package:iskxpress/core/services/user_state_service.dart';
 
 class LoginButton extends StatefulWidget {
   const LoginButton({
@@ -22,6 +25,57 @@ class LoginButton extends StatefulWidget {
 class _LoginButtonState extends State<LoginButton> {
   bool _isLoading = false;
   final AuthService _authService = AuthService();
+  final UserStateService _userStateService = UserStateService();
+
+  Future<void> _handleUserInitialization(User user, int authProvider) async {
+    final email = user.email;
+    final name = user.displayName;
+
+    if (kDebugMode) debugPrint('LoginButton: Starting user initialization for ${widget.authProvider}');
+    if (kDebugMode) debugPrint('LoginButton: User email: $email, name: $name, authProvider: $authProvider');
+
+    if (email == null || name == null) {
+      if (kDebugMode) debugPrint('LoginButton: User email or name not available - Email: $email, Name: $name');
+      throw Exception('User email or name not available from ${widget.authProvider} authentication');
+    }
+
+    if (kDebugMode) debugPrint('LoginButton: Calling initializeUser...');
+    
+    // Initialize user in the API
+    final success = await _userStateService.initializeUser(
+      email: email,
+      name: name,
+      authProvider: authProvider,
+    );
+
+    if (kDebugMode) debugPrint('LoginButton: initializeUser returned: $success');
+
+    if (!success) {
+      if (kDebugMode) debugPrint('LoginButton: User initialization failed');
+      throw Exception('Failed to initialize user in the system. Please check your internet connection and try again.');
+    }
+
+    if (kDebugMode) debugPrint('LoginButton: User initialization completed successfully');
+    
+    // Get the current user data to determine routing
+    final currentUser = _userStateService.currentUser;
+    if (currentUser == null) {
+      throw Exception('User data not available after initialization');
+    }
+
+    if (kDebugMode) debugPrint('LoginButton: User role: ${currentUser.role} (${currentUser.roleString})');
+    
+    // Navigate based on user role using NavHelper
+    if (mounted) {
+      if (currentUser.role == 1) {
+        if (kDebugMode) debugPrint('LoginButton: Navigating to VendorHomePage using NavHelper');
+        NavHelper.replacePageTo(context, VendorHomePage());
+      } else {
+        if (kDebugMode) debugPrint('LoginButton: Navigating to UserHomePage using NavHelper');
+        NavHelper.replacePageTo(context, UserHomePage());
+      }
+    }
+  }
 
   Future<void> _signInWithGoogle() async {
     setState(() {
@@ -29,19 +83,25 @@ class _LoginButtonState extends State<LoginButton> {
     });
 
     try {
+      if (kDebugMode) debugPrint('LoginButton: Starting Google sign-in');
       final UserCredential? result = await _authService.signInWithGoogle();
       
-      if (result != null && mounted) {
-        // Sign in successful, navigate to home
-        NavHelper.replacePageTo(context, UserHomePage());
+      if (result != null && result.user != null && mounted) {
+        if (kDebugMode) debugPrint('LoginButton: Google sign-in successful, initializing user...');
+        // Initialize user in the API (0 = Google) and navigate manually
+        await _handleUserInitialization(result.user!, 0);
+      } else {
+        if (kDebugMode) debugPrint('LoginButton: Google sign-in result was null or user was null');
       }
     } catch (e) {
+      if (kDebugMode) debugPrint('LoginButton: Google sign-in error: $e');
       if (mounted) {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Sign in failed: ${e.toString()}'),
+            content: Text('Google sign-in failed: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 8),
           ),
         );
       }
@@ -60,15 +120,20 @@ class _LoginButtonState extends State<LoginButton> {
     });
 
     try {
+      if (kDebugMode) debugPrint('LoginButton: Starting Microsoft sign-in');
       final UserCredential? result = await _authService.signInWithMicrosoft();
       
-      if (result != null && mounted) {
-        // Sign in successful, navigate to home
-        NavHelper.replacePageTo(context, UserHomePage());
+      if (result != null && result.user != null && mounted) {
+        if (kDebugMode) debugPrint('LoginButton: Microsoft sign-in successful, initializing user...');
+        // Initialize user in the API (1 = Microsoft) and navigate manually
+        await _handleUserInitialization(result.user!, 1);
+      } else {
+        if (kDebugMode) debugPrint('LoginButton: Microsoft sign-in result was null or user was null');
       }
     } catch (e) {
+      if (kDebugMode) debugPrint('LoginButton: Microsoft sign-in error: $e');
       if (mounted) {
-        String errorMessage = 'Sign in failed: ${e.toString()}';
+        String errorMessage = 'Microsoft sign-in failed: ${e.toString()}';
         
         // Check if it's a domain restriction error
         if (e.toString().contains('DOMAIN_NOT_ALLOWED')) {
@@ -80,7 +145,7 @@ class _LoginButtonState extends State<LoginButton> {
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 5), // Longer duration for domain error
+            duration: Duration(seconds: 8), // Longer duration for domain error
           ),
         );
       }

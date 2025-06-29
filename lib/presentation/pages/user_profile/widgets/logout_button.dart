@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:iskxpress/core/services/auth_service.dart';
 import 'package:iskxpress/core/helpers/navigation_helper.dart';
@@ -16,31 +17,51 @@ class _LogoutButtonState extends State<LogoutButton> {
   final AuthService _authService = AuthService();
 
   Future<void> _signOut() async {
+    if (_isLoading) {
+      if (kDebugMode) debugPrint('LogoutButton: Sign out already in progress');
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
+      if (kDebugMode) debugPrint('LogoutButton: Starting manual logout process');
+      
+      // Step 1: Sign out from Firebase and clear user state
       await _authService.signOut();
+      if (kDebugMode) debugPrint('LogoutButton: Auth service signOut completed');
       
-      // Wait a bit for the StreamBuilder to detect auth state change
-      await Future.delayed(Duration(milliseconds: 500));
+      // Step 2: Wait a moment for Firebase to process the sign out
+      await Future.delayed(Duration(milliseconds: 300));
       
-      // If we're still on this page after sign out, manually navigate
-      if (mounted && FirebaseAuth.instance.currentUser == null) {
+      // Step 3: Verify we're actually signed out
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        if (kDebugMode) debugPrint('LogoutButton: Warning - User still appears to be signed in: ${currentUser.email}');
+        throw Exception('Logout may not have completed properly');
+      }
+      
+      if (kDebugMode) debugPrint('LogoutButton: Logout verification passed - user is signed out');
+      
+      // Step 4: Navigate manually using NavHelper
+      if (mounted) {
+        if (kDebugMode) debugPrint('LogoutButton: Navigating to login page using NavHelper');
         NavHelper.replacePageTo(context, LoginPage());
       }
+      
     } catch (e) {
+      if (kDebugMode) debugPrint('LogoutButton: Sign out error: $e');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Sign out failed: ${e.toString()}'),
             backgroundColor: Colors.red,
+            duration: Duration(seconds: 5),
           ),
         );
-        
-        // Even if there's an error, try to navigate to login
-        NavHelper.replacePageTo(context, LoginPage());
       }
     } finally {
       if (mounted) {
@@ -80,7 +101,10 @@ class _LogoutButtonState extends State<LogoutButton> {
                   valueColor: AlwaysStoppedAnimation<Color>(colorScheme.onPrimary),
                 ),
               )
-            : Text('Log out', style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary)),
+            : Text(
+                'Log out', 
+                style: textTheme.labelLarge?.copyWith(color: colorScheme.onPrimary)
+              ),
       ),
     );
   }
