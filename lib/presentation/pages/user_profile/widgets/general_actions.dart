@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:iskxpress/presentation/pages/feedback/feedback_page.dart';
 
 class GeneralActions extends StatelessWidget {
   const GeneralActions({super.key});
+
+  void _navigateToFeedback(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const FeedbackPage(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,18 +40,16 @@ class GeneralActions extends StatelessWidget {
                   Text('Delivery History'),
                 ],
               ),
-              Row(
-                children: [
-                  Icon(Icons.question_mark_rounded),
-                  const SizedBox(width: 8),
-                  Text('Help'),
-                ],
+              GestureDetector(
+                onTap: () => _navigateToFeedback(context),
+                child: Row(
+                  children: [
+                    Icon(Icons.feedback_rounded),
+                    const SizedBox(width: 8),
+                    Text('Send your feedback'),
+                  ],
+                ),
               ),
-              Row(children: [
-                Icon(Icons.lock),
-                const SizedBox(width: 8),
-                Text('Security')
-              ]),
             ],
           ),
         ),
