@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/vendor_home_page.dart';
-import 'package:iskxpress/presentation/pages/deliveries/deliveries_page.dart';
-import 'package:iskxpress/presentation/pages/user_profile/user_profile_page.dart';
+import 'package:iskxpress/presentation/pages/vendor_orders/vendor_orders_page.dart';
+import 'package:iskxpress/presentation/pages/vendor_profile/vendor_profile_page.dart';
 import 'package:iskxpress/core/helpers/navigation_helper.dart';
 
 class VendorBottomNavBar extends StatelessWidget {
@@ -17,10 +17,10 @@ class VendorBottomNavBar extends StatelessWidget {
         NavHelper.replacePageTo(context, const VendorHomePage());
         break;
       case 1:
-        NavHelper.replacePageTo(context, const DeliveriesPage());
+        NavHelper.replacePageTo(context, const VendorOrdersPage());
         break;
       case 2:
-        NavHelper.replacePageTo(context, const UserProfilePage());
+        NavHelper.replacePageTo(context, const VendorProfilePage());
         break;
     }
   }
@@ -45,7 +45,7 @@ class VendorBottomNavBar extends StatelessWidget {
         onTap: (index) => _onItemTapped(context, index),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Menu'),
-          BottomNavigationBarItem(icon: Icon(Icons.delivery_dining), label: 'Orders'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Orders'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         backgroundColor: Colors.transparent,
