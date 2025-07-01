@@ -299,7 +299,7 @@ class _ProductTileState extends State<ProductTile> {
                 const SizedBox(height: 2),
                 // Selling Price with Markup
                 Text(
-                  'Sell: ₱ ${widget.product.sellingPrice.toStringAsFixed(2)}',
+                  'Sell: ₱ ${((widget.product.priceWithMarkup ?? widget.product.sellingPrice).round())}',
                   style: textTheme.bodyMedium?.copyWith(
                     color: Colors.green[700],
                     fontWeight: FontWeight.w600,

@@ -5,6 +5,11 @@ import 'package:iskxpress/core/models/product_model.dart';
 import 'package:iskxpress/core/services/section_api_service.dart';
 import 'package:iskxpress/core/services/product_api_service.dart';
 import 'package:iskxpress/presentation/pages/user_product_view/widgets/user_product_app_bar.dart';
+import 'package:iskxpress/core/services/cart_api_service.dart';
+import 'package:iskxpress/core/services/user_state_service.dart';
+import 'package:iskxpress/presentation/pages/user_cart/user_cart_page.dart';
+import 'package:iskxpress/core/helpers/navigation_helper.dart';
+import 'package:flutter/foundation.dart';
 
 class UserProductPage extends StatefulWidget {
   final StallModel stall;
@@ -285,14 +290,36 @@ class _UserProductPageState extends State<UserProductPage>
                   child: IconButton(
                     onPressed: isSoldOut
                         ? null
-                        : () {
-                            // TODO: Implement add to cart functionality
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${product.name} added to cart'),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
+                        : () async {
+                            final userId = UserStateService().currentUser?.id;
+                            if (kDebugMode) {
+                              debugPrint('UserProductPage: Add to cart pressed, userId: $userId');
+                              debugPrint('UserProductPage: Product: ${product.name} (ID: ${product.id})');
+                            }
+                            if (userId == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('User not found. Please log in again.')),
+                              );
+                              return;
+                            }
+                            try {
+                              if (kDebugMode) {
+                                debugPrint('UserProductPage: Calling addToCart API...');
+                              }
+                              await CartApiService.addToCart(userId: userId, productId: product.id, quantity: 1);
+                              if (!mounted) return;
+                              if (kDebugMode) {
+                                debugPrint('UserProductPage: Add to cart successful, navigating to cart page');
+                              }
+                              NavHelper.pushPageTo(context, UserCartPage(userId: userId));
+                            } catch (e) {
+                              if (kDebugMode) {
+                                debugPrint('UserProductPage: Add to cart failed: $e');
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Failed to add to cart: $e')),
+                              );
+                            }
                           },
                     icon: Icon(
                       Icons.add,

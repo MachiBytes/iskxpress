@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iskxpress/core/widgets/custom_app_bar.dart';
+import 'package:iskxpress/core/widgets/vendor_app_bar.dart';
 import 'package:iskxpress/core/widgets/vendor_bottom_nav_bar.dart';
 
 class VendorOrdersPage extends StatefulWidget {
@@ -19,7 +19,7 @@ class _VendorOrdersPageState extends State<VendorOrdersPage> {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: const CustomAppBar(),
+      appBar: const VendorAppBar(title: 'Orders'),
       bottomNavigationBar: const VendorBottomNavBar(currentIndex: 1),
       body: Center(
         child: Column(

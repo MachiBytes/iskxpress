@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:iskxpress/core/widgets/custom_app_bar.dart';
+import 'package:iskxpress/core/widgets/vendor_app_bar.dart';
 import 'package:iskxpress/core/widgets/vendor_bottom_nav_bar.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/vendor_header.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/product_section.dart';
@@ -127,7 +127,7 @@ class _VendorHomePageState extends State<VendorHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: const CustomAppBar(),
+      appBar: const VendorAppBar(title: 'Vendor Home'),
       bottomNavigationBar: const VendorBottomNavBar(currentIndex: 0),
       body: Stack(
         children: [

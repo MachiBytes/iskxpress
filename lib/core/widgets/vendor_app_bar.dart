@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:iskxpress/core/constants/image_strings.dart';
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final VoidCallback? onCartPressed;
-  const CustomAppBar({super.key, this.onCartPressed});
+class VendorAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String? title;
+  const VendorAppBar({super.key, this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -11,12 +11,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final colorScheme  = Theme.of(context).colorScheme;
 
     return Material(
-      elevation: 4, // Adjust for stronger/weaker shadow
+      elevation: 4,
       shadowColor: Theme.of(context).shadowColor,
       child: AppBar(
-        actionsPadding: const EdgeInsets.only(right: 8),
+        actions: [],
         backgroundColor: colorScheme.primary,
-        elevation: 0, // Prevents double shadow
+        elevation: 0,
         leadingWidth: 64,
         leading: Padding(
           padding: const EdgeInsets.only(
@@ -28,19 +28,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Image.asset(TImages.appIcon, height: 38, width: 38),
         ),
         title: Text(
-          'Welcome back, Iskx!',
+          title ?? 'Vendor',
           style: textTheme.titleMedium?.copyWith(color: colorScheme.onPrimary, fontSize: 16),
         ),
-        actions: [
-          IconButton(
-            onPressed: onCartPressed,
-            icon: Icon(Icons.shopping_cart, color: colorScheme.onPrimary),
-          ),
-        ],
       ),
     );
   }
-  
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
-}
+} 

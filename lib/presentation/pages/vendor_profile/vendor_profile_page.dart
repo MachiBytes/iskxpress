@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iskxpress/core/widgets/custom_app_bar.dart';
+import 'package:iskxpress/core/widgets/vendor_app_bar.dart';
 import 'package:iskxpress/core/widgets/vendor_bottom_nav_bar.dart';
 import 'package:iskxpress/presentation/pages/vendor_profile/widgets/vendor_profile_bottom_section.dart';
 import 'package:iskxpress/presentation/pages/vendor_profile/widgets/vendor_profile_top_section.dart';
@@ -20,7 +20,7 @@ class _VendorProfilePageState extends State<VendorProfilePage> {
 
     return Scaffold(
       backgroundColor: colorScheme.primary,
-      appBar: const CustomAppBar(),
+      appBar: const VendorAppBar(title: 'Profile'),
       bottomNavigationBar: const VendorBottomNavBar(currentIndex: 2),
       body: SafeArea(
         child: Column(
