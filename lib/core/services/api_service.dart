@@ -40,6 +40,10 @@ class ApiService {
 
   // ============== STALL ENDPOINTS ==============
 
+  /// Get all stalls
+  static Future<List<StallModel>> getStalls() => 
+      StallApiService.getStalls();
+
   /// Get stalls for a vendor
   static Future<StallModel?> getStallByVendorId(int vendorId) => 
       StallApiService.getStallByVendorId(vendorId);

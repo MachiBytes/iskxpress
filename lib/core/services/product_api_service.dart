@@ -250,4 +250,30 @@ class ProductApiService {
       return false;
     }
   }
+
+  // Update product availability
+  static Future<bool> updateProductAvailability({
+    required int productId,
+    required int availability, // 0 = available, 1 = sold out
+  }) async {
+    try {
+      final body = json.encode({
+        'availability': availability,
+      });
+      final response = await http.patch(
+        Uri.parse('${BaseApiService.baseUrl}/api/products/$productId/availability'),
+        headers: BaseApiService.jsonHeaders,
+        body: body,
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        if (kDebugMode) debugPrint('PRODUCT_API: Failed to update availability: ${response.statusCode} - ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('PRODUCT_API: Error updating product availability: $e');
+      return false;
+    }
+  }
 } 

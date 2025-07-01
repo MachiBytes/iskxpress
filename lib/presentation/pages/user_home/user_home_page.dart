@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:iskxpress/core/widgets/custom_app_bar.dart';
 import 'package:iskxpress/core/widgets/custom_bottom_nav_bar.dart';
+import 'package:iskxpress/core/models/stall_model.dart';
+import 'package:iskxpress/core/services/stall_api_service.dart';
 import 'package:iskxpress/presentation/pages/user_home/widgets/user_home_content.dart';
 import 'package:iskxpress/presentation/pages/user_home/widgets/user_home_search_bar.dart';
+import 'package:iskxpress/core/models/category_model.dart';
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -14,44 +17,78 @@ class UserHomePage extends StatefulWidget {
 }
 
 class _UserHomePageState extends State<UserHomePage> {
-  List<Map<String, dynamic>> stalls = [];
+  List<StallModel> stalls = [];
+  List<StallModel> searchResults = [];
+  bool isLoading = true;
+  String selectedCategory = 'All';
+  String searchQuery = '';
+  bool isSearching = false;
 
   @override
   void initState() {
     super.initState();
-    // Seeded stalls data (in a real DDD setup, this would come from the domain/application layer)
-    stalls = [
-      {
-        "imagePath": "assets/images/demo/stalls/bento_express.png",
-        "name": "Bento Express",
-        "number": "Stall 6",
-        "description": "Bento Express serves delicious Asian snacks and meals."
-      },
-      {
-        "imagePath": "assets/images/demo/stalls/fewa_ni_virgin.png",
-        "name": "FEWA ni Virgin",
-        "number": "Stall 10",
-        "description": "FEWA ni Virgin grills flavorful chicken meals."
-      },
-      {
-        "imagePath": "assets/images/demo/stalls/chick_n_rice.png",
-        "name": "Chick N' Rice",
-        "number": "Stall 14",
-        "description": "Chick N' Rice offers a variety of home-cooked meals for an affordable price."
-      },
-      {
-        "imagePath": "assets/images/demo/stalls/full_cup.png",
-        "name": "Full Cup",
-        "number": "Stall 11",
-        "description": "Full Cup brews rich coffee blends and tasty pastries."
-      },
-      {
-        "imagePath": "assets/images/demo/stalls/kape_kuripot.png",
-        "name": "Kape Kuripot",
-        "number": "Stall 9",
-        "description": "Kape Kuripot brews rich coffee blends with a special flavor coming out each..."
-      },
-    ];
+    _fetchStalls();
+  }
+
+  Future<void> _fetchStalls() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      
+      final fetchedStalls = await StallApiService.getStalls();
+      
+      setState(() {
+        stalls = fetchedStalls;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      // Handle error - could show a snackbar or error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load stalls: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _onSearchChanged(String query) async {
+    setState(() {
+      searchQuery = query;
+    });
+    if (query.isEmpty) {
+      setState(() {
+        isSearching = false;
+        searchResults = [];
+        selectedCategory = 'All';
+      });
+      return;
+    }
+    setState(() {
+      isLoading = true;
+      isSearching = true;
+      selectedCategory = 'All';
+    });
+    final results = await StallApiService.searchStalls(query);
+    setState(() {
+      searchResults = results;
+      isLoading = false;
+    });
+  }
+
+  void _onFilterSelected(String category) {
+    setState(() {
+      selectedCategory = category;
+    });
+  }
+
+  List<StallModel> get filteredStalls {
+    final list = isSearching ? searchResults : stalls;
+    if (selectedCategory == 'All') return list;
+    return list.where((stall) => stall.categories.any((cat) => cat.name == selectedCategory)).toList();
   }
 
   @override
@@ -65,9 +102,15 @@ class _UserHomePageState extends State<UserHomePage> {
       body: SafeArea(child: Column(
         children: [
           SizedBox(height: 16,),
-          UserHomeSearchBar(),
+          UserHomeSearchBar(
+            onChanged: _onSearchChanged,
+          ),
           SizedBox(height: 16,),
-          UserHomePageContent(stalls: stalls)
+          UserHomePageContent(
+            stalls: filteredStalls,
+            isLoading: isLoading,
+            onFilterSelected: _onFilterSelected,
+          )
         ],
       )),
     );

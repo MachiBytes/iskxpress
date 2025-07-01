@@ -3,6 +3,7 @@ import '../vendor_home_page.dart';
 import '../../../../core/models/product_model.dart';
 import '../../../../core/models/section_model.dart';
 import '../../../../core/models/category_model.dart';
+import '../../../../core/services/product_api_service.dart';
 
 class ProductSectionWidget extends StatelessWidget {
   final SectionWithProducts section;
@@ -150,7 +151,7 @@ class ProductSectionWidget extends StatelessWidget {
   }
 }
 
-class ProductTile extends StatelessWidget {
+class ProductTile extends StatefulWidget {
   final ProductModel product;
   final List<CategoryModel> categories;
   final VoidCallback onEdit;
@@ -164,17 +165,62 @@ class ProductTile extends StatelessWidget {
     required this.onDelete,
   });
 
+  @override
+  State<ProductTile> createState() => _ProductTileState();
+}
+
+class _ProductTileState extends State<ProductTile> {
+  bool _isLoading = false;
+  late int _availability;
+
+  @override
+  void initState() {
+    super.initState();
+    _availability = widget.product.availability;
+  }
+
   String? _getCategoryName() {
-    if (product.categoryId == null) return null;
-    
+    if (widget.product.categoryId == null) return null;
     try {
-      final category = categories.firstWhere(
-        (cat) => cat.id == product.categoryId,
+      final category = widget.categories.firstWhere(
+        (cat) => cat.id == widget.product.categoryId,
       );
       return category.name;
     } catch (e) {
       return null;
     }
+  }
+
+  Future<void> _toggleAvailability(bool value) async {
+    setState(() {
+      _isLoading = true;
+    });
+    final newAvailability = value ? 0 : 1; // true = available, false = sold out
+    final success = await ProductApiService.updateProductAvailability(
+      productId: widget.product.id,
+      availability: newAvailability,
+    );
+    if (success) {
+      setState(() {
+        _availability = newAvailability;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newAvailability == 0 ? 'Product marked as available' : 'Product marked as sold out'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to update product availability'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -208,9 +254,9 @@ class ProductTile extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: product.imageUrl != null
+              child: widget.product.imageUrl != null
                   ? Image.network(
-                      product.imageUrl!,
+                      widget.product.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Icon(
@@ -235,7 +281,7 @@ class ProductTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  product.name,
+                  widget.product.name,
                   style: textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
@@ -244,7 +290,7 @@ class ProductTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 // Base Price
                 Text(
-                  'Base: ₱ ${product.basePrice.toStringAsFixed(2)}',
+                  'Base: ₱ ${widget.product.basePrice.toStringAsFixed(2)}',
                   style: textTheme.bodySmall?.copyWith(
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
@@ -253,7 +299,7 @@ class ProductTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 // Selling Price with Markup
                 Text(
-                  'Sell: ₱ ${product.sellingPrice.toStringAsFixed(2)}',
+                  'Sell: ₱ ${widget.product.sellingPrice.toStringAsFixed(2)}',
                   style: textTheme.bodyMedium?.copyWith(
                     color: Colors.green[700],
                     fontWeight: FontWeight.w600,
@@ -277,6 +323,25 @@ class ProductTile extends StatelessWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      _availability == 0 ? 'Available' : 'Sold Out',
+                      style: textTheme.bodySmall?.copyWith(
+                        color: _availability == 0 ? Colors.green : Colors.red,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Switch(
+                      value: _availability == 0,
+                      onChanged: _isLoading ? null : _toggleAvailability,
+                      activeColor: Colors.green,
+                      inactiveThumbColor: Colors.red,
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -286,7 +351,7 @@ class ProductTile extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                onPressed: onEdit,
+                onPressed: widget.onEdit,
                 icon: const Icon(
                   Icons.edit,
                   color: Colors.grey,
@@ -302,7 +367,7 @@ class ProductTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               IconButton(
-                onPressed: onDelete,
+                onPressed: widget.onDelete,
                 icon: const Icon(
                   Icons.delete,
                   color: Colors.red,

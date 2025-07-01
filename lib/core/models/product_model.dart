@@ -7,6 +7,8 @@ class ProductModel {
   final String? imageUrl;
   final String? createdAt;
   final String? updatedAt;
+  final int availability; // 0 = available, 1 = sold out
+  final double? priceWithDelivery;
 
   // Default markup percentage (20% - you can adjust this value)
   static const double defaultMarkupPercentage = 20.0;
@@ -20,6 +22,8 @@ class ProductModel {
     this.imageUrl,
     this.createdAt,
     this.updatedAt,
+    this.availability = 0,
+    this.priceWithDelivery,
   });
 
   // Calculate selling price with markup
@@ -42,6 +46,8 @@ class ProductModel {
       imageUrl: json['pictureUrl'] ?? json['imageUrl'], // Try pictureUrl first, fallback to imageUrl
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
+      availability: json['availability'] ?? 0,
+      priceWithDelivery: json['priceWithDelivery'] != null ? (json['priceWithDelivery'] as num).toDouble() : null,
     );
   }
 
@@ -55,6 +61,8 @@ class ProductModel {
       'imageUrl': imageUrl,
       'createdAt': createdAt,
       'updatedAt': updatedAt,
+      'availability': availability,
+      'priceWithDelivery': priceWithDelivery,
     };
   }
 
@@ -67,6 +75,8 @@ class ProductModel {
     String? imageUrl,
     String? createdAt,
     String? updatedAt,
+    int? availability,
+    double? priceWithDelivery,
   }) {
     return ProductModel(
       id: id ?? this.id,
@@ -77,6 +87,8 @@ class ProductModel {
       imageUrl: imageUrl ?? this.imageUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      availability: availability ?? this.availability,
+      priceWithDelivery: priceWithDelivery ?? this.priceWithDelivery,
     );
   }
 } 

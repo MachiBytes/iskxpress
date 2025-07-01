@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 
 class UserProductAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const UserProductAppBar({super.key});
+  final String stallName;
+  
+  const UserProductAppBar({
+    super.key,
+    required this.stallName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -12,24 +17,16 @@ class UserProductAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: colorScheme.primary,
       toolbarHeight: kToolbarHeight,
       iconTheme: IconThemeData(color: colorScheme.onPrimary),
-      title: SizedBox(
-        height: 40, // keeps the search bar neat inside the AppBar
-        child: SearchBar(
-          leading: Icon(Icons.search, color: colorScheme.primary),
-          hintText: 'Search in Bento Express',
-          elevation: WidgetStateProperty.all(0),
-          backgroundColor: WidgetStatePropertyAll(colorScheme.surface),
-          shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
-          ),
-          hintStyle: WidgetStatePropertyAll(textTheme.bodySmall),
-          padding: const WidgetStatePropertyAll(
-            EdgeInsets.symmetric(horizontal: 16),
-          ),
-          textStyle: WidgetStatePropertyAll(textTheme.bodySmall),
-          onChanged: (value) {},
+      title: Text(
+        stallName,
+        style: textTheme.titleLarge?.copyWith(
+          color: colorScheme.onPrimary,
+          fontWeight: FontWeight.bold,
         ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
+      centerTitle: true,
     );
   }
   

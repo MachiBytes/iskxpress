@@ -8,6 +8,74 @@ import '../models/stall_model.dart';
 import 'base_api_service.dart';
 
 class StallApiService {
+  // Get all stalls
+  static Future<List<StallModel>> getStalls() async {
+    try {
+      if (kDebugMode) debugPrint('STALL_API: Getting all stalls from ${BaseApiService.baseUrl}/api/stalls');
+      
+      final response = await http.get(
+        Uri.parse('${BaseApiService.baseUrl}/api/stalls'),
+        headers: BaseApiService.jsonHeaders,
+      );
+
+      if (kDebugMode) {
+        debugPrint('STALL_API: Get stalls response - Status: ${response.statusCode}');
+        debugPrint('STALL_API: Get stalls response - Headers: ${response.headers}');
+        debugPrint('STALL_API: Get stalls response - Body length: ${response.body.length}');
+        debugPrint('STALL_API: Get stalls response - Body: ${response.body}');
+      }
+
+      if (response.statusCode == 200) {
+        try {
+          if (response.body.trim().isEmpty) {
+            if (kDebugMode) debugPrint('STALL_API: Stalls response body is empty');
+            return [];
+          }
+          
+          final dynamic rawData = json.decode(response.body);
+          if (kDebugMode) debugPrint('STALL_API: Parsed JSON type: ${rawData.runtimeType}');
+          
+          if (rawData is! List) {
+            if (kDebugMode) debugPrint('STALL_API: Expected List but got ${rawData.runtimeType}: $rawData');
+            return [];
+          }
+          
+          final List<dynamic> responseData = rawData;
+          if (kDebugMode) debugPrint('STALL_API: Found ${responseData.length} stall items in response');
+          
+          final stalls = <StallModel>[];
+          for (int i = 0; i < responseData.length; i++) {
+            try {
+              final stallJson = responseData[i];
+              if (kDebugMode) debugPrint('STALL_API: Processing stall $i: $stallJson');
+              
+              final stall = StallModel.fromJson(stallJson);
+              stalls.add(stall);
+              
+              if (kDebugMode) debugPrint('STALL_API: Successfully parsed stall: ${stall.id} - ${stall.name}');
+            } catch (e) {
+              if (kDebugMode) debugPrint('STALL_API: Error parsing stall $i: $e');
+            }
+          }
+          
+          if (kDebugMode) debugPrint('STALL_API: Successfully parsed ${stalls.length} stalls total');
+          return stalls;
+        } catch (parseError) {
+          if (kDebugMode) debugPrint('STALL_API: Error parsing stalls JSON: $parseError');
+          if (kDebugMode) debugPrint('STALL_API: Raw response body: ${response.body}');
+          return [];
+        }
+      } else {
+        if (kDebugMode) debugPrint('STALL_API: Stalls request failed with status ${response.statusCode}');
+        if (kDebugMode) debugPrint('STALL_API: Error response body: ${response.body}');
+        throw Exception('Failed to get stalls: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('STALL_API: Error getting stalls: $e');
+      return [];
+    }
+  }
+
   // Get stalls for a vendor
   static Future<StallModel?> getStallByVendorId(int vendorId) async {
     try {
@@ -178,6 +246,34 @@ class StallApiService {
     } catch (e) {
       if (kDebugMode) debugPrint('STALL_API: Error uploading stall picture: $e');
       return false;
+    }
+  }
+
+  // Search stalls by query
+  static Future<List<StallModel>> searchStalls(String query) async {
+    try {
+      if (kDebugMode) debugPrint('STALL_API: Searching stalls with query: $query');
+      final response = await http.get(
+        Uri.parse('${BaseApiService.baseUrl}/api/stalls/search?query=$query'),
+        headers: BaseApiService.jsonHeaders,
+      );
+      if (kDebugMode) debugPrint('STALL_API: Search stalls response - Status: ${response.statusCode}, Body: ${response.body}');
+      if (response.statusCode == 200) {
+        try {
+          final List<dynamic> responseData = json.decode(response.body);
+          final stalls = responseData.map((json) => StallModel.fromJson(json)).toList();
+          if (kDebugMode) debugPrint('STALL_API: Successfully parsed ${stalls.length} search results');
+          return stalls;
+        } catch (parseError) {
+          if (kDebugMode) debugPrint('STALL_API: Error parsing search results JSON: $parseError');
+          return [];
+        }
+      } else {
+        throw Exception('Failed to search stalls: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('STALL_API: Error searching stalls: $e');
+      return [];
     }
   }
 } 

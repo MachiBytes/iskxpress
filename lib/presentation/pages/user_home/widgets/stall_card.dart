@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iskxpress/core/constants/image_strings.dart';
 
 class StallCard extends StatelessWidget {
   const StallCard({
@@ -43,19 +44,7 @@ class StallCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)),
-            child: Image.asset(
-              imagePath,
-              height: 120, // Adjust image height
-              width: 120, // Adjust image width
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return SizedBox(
-                  height: 120,
-                  width: 120,
-                  child: Icon(Icons.restaurant, color: colorScheme.onSurface.withOpacity(0.5)),
-                );
-              },
-            ),
+            child: _buildStallImage(colorScheme),
           ),
           Expanded(
             child: Padding(
@@ -87,6 +76,67 @@ class StallCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStallImage(ColorScheme colorScheme) {
+    // Check if imagePath is a network URL
+    final bool isNetworkImage = imagePath.startsWith('http://') || imagePath.startsWith('https://');
+    
+    if (isNetworkImage) {
+      // Use Image.network for network URLs
+      return Image.network(
+        imagePath,
+        height: 120,
+        width: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackImage(colorScheme);
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return SizedBox(
+            height: 120,
+            width: 120,
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // Use Image.asset for local assets
+      return Image.asset(
+        imagePath,
+        height: 120,
+        width: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackImage(colorScheme);
+        },
+      );
+    }
+  }
+
+  Widget _buildFallbackImage(ColorScheme colorScheme) {
+    return SizedBox(
+      height: 120,
+      width: 120,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+        ),
+        child: Icon(
+          Icons.restaurant,
+          color: colorScheme.onSurface.withOpacity(0.5),
+          size: 40,
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iskxpress/core/services/category_api_service.dart';
 // import 'package:gap/gap.dart'; // Optional: for cleaner spacing in the Row
 
 class StallFilterRow extends StatefulWidget {
@@ -15,24 +16,57 @@ class StallFilterRow extends StatefulWidget {
 
 class _StallFilterRowState extends State<StallFilterRow> {
   String? _selectedFilter;
-
-  final List<String> _labels = [
-    'All', 'Food', 'Drinks', 'Snacks', 'Desserts', 'Meals', 'Vegan', 'Rice Meals'
-  ];
+  List<String> _labels = ['All'];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _selectedFilter = _labels.first;
+    _selectedFilter = 'All';
+    _fetchCategories();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.onFilterSelected(_selectedFilter!);
     });
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      final categories = await CategoryApiService.getCategories();
+      
+      setState(() {
+        _labels = ['All', ...categories.map((category) => category.name)];
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Handle error - keep default 'All' option
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load categories: $e')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    if (_isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
