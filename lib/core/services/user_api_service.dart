@@ -115,4 +115,40 @@ class UserApiService {
       return null;
     }
   }
+
+  // Get Google users (list of emails)
+  static Future<List<String>> getGoogleUsers() async {
+    try {
+      if (kDebugMode) debugPrint('USER_API: Getting Google users');
+      final response = await http.get(
+        Uri.parse('${BaseApiService.baseUrl}/api/users/google'),
+        headers: BaseApiService.jsonHeaders,
+      );
+
+      if (kDebugMode) debugPrint('USER_API: Get Google users response - Status: ${response.statusCode}, Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        try {
+          final List<dynamic> responseData = json.decode(response.body);
+          // Extract email addresses from the user objects
+          final List<String> googleEmails = responseData
+              .map((user) => user['email'] as String)
+              .where((email) => email.isNotEmpty)
+              .toList();
+          
+          if (kDebugMode) debugPrint('USER_API: Successfully extracted ${googleEmails.length} Google emails from ${responseData.length} users');
+          return googleEmails;
+        } catch (parseError) {
+          if (kDebugMode) debugPrint('USER_API: Error parsing Google users response JSON: $parseError');
+          return [];
+        }
+      } else {
+        if (kDebugMode) debugPrint('USER_API: Get Google users failed with status ${response.statusCode}: ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('USER_API: Error getting Google users: $e');
+      return [];
+    }
+  }
 } 

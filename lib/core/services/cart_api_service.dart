@@ -90,4 +90,33 @@ class CartApiService {
     );
     return response.statusCode == 200;
   }
+
+  static Future<bool> multiCheckout({
+    required int userId,
+    required List<int> cartItemIds,
+    required int fulfillmentMethod, // 0 = Pickup, 1 = Delivery
+    String? deliveryAddress,
+    String? notes,
+  }) async {
+    final url = '${BaseApiService.baseUrl}/api/Order/user/$userId/multi-checkout';
+    final body = json.encode({
+      'cartItemIds': cartItemIds,
+      'fulfillmentMethod': fulfillmentMethod,
+      'deliveryAddress': deliveryAddress,
+      'notes': notes,
+    });
+    if (kDebugMode) {
+      debugPrint('CartApiService: multiCheckout POST $url');
+      debugPrint('CartApiService: Body: $body');
+    }
+    final response = await http.post(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+      body: body,
+    );
+    if (kDebugMode) {
+      debugPrint('CartApiService: multiCheckout response: ${response.statusCode} ${response.body}');
+    }
+    return response.statusCode == 200 || response.statusCode == 201;
+  }
 } 

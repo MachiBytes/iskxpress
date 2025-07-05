@@ -38,6 +38,10 @@ class ApiService {
   static Future<Map<String, dynamic>?> getUserById(int userId) => 
       UserApiService.getUserById(userId);
 
+  /// Get Google users (list of emails)
+  static Future<List<String>> getGoogleUsers() => 
+      UserApiService.getGoogleUsers();
+
   // ============== STALL ENDPOINTS ==============
 
   /// Get all stalls

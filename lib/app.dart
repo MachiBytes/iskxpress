@@ -37,13 +37,9 @@ class _MyAppState extends State<MyApp> {
     final success = await _userStateService.autoLoadUserData();
     
     if (!success) {
-      if (kDebugMode) debugPrint('App: Failed to auto-load user data, clearing user state');
-      // If we can't load user data, clear the user state and force re-authentication
-      _userStateService.clearUser();
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        await FirebaseAuth.instance.signOut();
-      }
+      if (kDebugMode) debugPrint('App: Failed to auto-load user data, but not clearing user state yet');
+      // Don't immediately clear user state - let the login flow handle it
+      // This prevents conflicts with the login button's user initialization
     }
     
     if (mounted) {
@@ -93,19 +89,29 @@ class _MyAppState extends State<MyApp> {
               // If no user data is available, show login page (hard enforcement)
               if (currentUser == null) {
                 if (kDebugMode) debugPrint('App: User authenticated but no user data available, showing login page (hard enforcement)');
-                // Clear the user state and sign out to force re-authentication
-                _userStateService.clearUser();
-                FirebaseAuth.instance.signOut();
+                // Only clear user state and sign out if we're not in the middle of a login flow
+                // This prevents conflicts with the login button's user initialization
+                if (!_isInitializing) {
+                  _userStateService.clearUser();
+                  FirebaseAuth.instance.signOut();
+                }
                 return const LoginPage();
               }
               
-              // Route based on user role from API
-              if (currentUser.role == 1) {
-                if (kDebugMode) debugPrint('App: User role is Vendor, showing VendorHomePage');
-                return VendorHomePage();
-              } else {
-                if (kDebugMode) debugPrint('App: User role is User, showing UserHomePage');
+              // Route based on auth provider: Microsoft users always go to UserHomePage, Google users based on role
+              if (currentUser.authProvider == 1) {
+                // Microsoft users always go to UserHomePage
+                if (kDebugMode) debugPrint('App: Microsoft user, showing UserHomePage');
                 return UserHomePage();
+              } else {
+                // Google users route based on their role
+                if (currentUser.role == 1) {
+                  if (kDebugMode) debugPrint('App: Google user with Vendor role, showing VendorHomePage');
+                  return VendorHomePage();
+                } else {
+                  if (kDebugMode) debugPrint('App: Google user with User role, showing UserHomePage');
+                  return UserHomePage();
+                }
               }
             },
           );

@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:iskxpress/core/services/user_state_service.dart';
 import 'package:iskxpress/core/services/stall_state_service.dart';
+import 'package:iskxpress/core/services/api_service.dart';
 
 
 class AuthService {
@@ -23,10 +24,7 @@ class AuthService {
   // Auth state changes stream
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Check if email domain is allowed
-  bool _isEmailDomainAllowed(String email) {
-    return _allowedDomains.any((domain) => email.toLowerCase().endsWith('@$domain'));
-  }
+
 
   // Google Sign In
   Future<UserCredential?> signInWithGoogle() async {
@@ -43,14 +41,19 @@ class AuthService {
 
       if (kDebugMode) debugPrint('AuthService: Google user obtained: ${googleUser.email}');
 
-      // Restrict: Only allow Google sign-in if email is already registered in Firebase Auth
-      final List<String> signInMethods = await _auth.fetchSignInMethodsForEmail(googleUser.email);
-      if (kDebugMode) debugPrint('AuthService: Sign-in methods for email: ${signInMethods.join(", ")}');
-      if (signInMethods.isEmpty || !signInMethods.contains('google.com')) {
-        if (kDebugMode) debugPrint('AuthService: Google email not registered in Firebase Auth, denying login');
+      // Validate Google email against allowed list from API
+      if (kDebugMode) debugPrint('AuthService: Validating Google email against allowed list...');
+      final List<String> allowedGoogleEmails = await ApiService.getGoogleUsers();
+      
+      if (kDebugMode) debugPrint('AuthService: Allowed Google emails: ${allowedGoogleEmails.join(", ")}');
+      
+      if (!allowedGoogleEmails.contains(googleUser.email)) {
+        if (kDebugMode) debugPrint('AuthService: Google email not in allowed list, denying login');
         await _googleSignIn.signOut();
-        throw Exception('GOOGLE_EMAIL_NOT_REGISTERED: This Google account is not authorized to sign in.');
+        throw Exception('GOOGLE_EMAIL_NOT_AUTHORIZED: This Google account is not authorized to sign in.');
       }
+
+      if (kDebugMode) debugPrint('AuthService: Google email validation passed');
 
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -114,13 +117,17 @@ class AuthService {
       return result;
     } catch (e) {
       if (kDebugMode) debugPrint('AuthService: Microsoft sign-in error: $e');
-      rethrow;
+      // If it's a domain restriction error, rethrow it
+      if (e.toString().contains('DOMAIN_NOT_ALLOWED')) {
+        rethrow;
+      }
+      // For other errors, provide a more user-friendly message
+      throw Exception('Microsoft sign-in failed. Please try again or contact support if the problem persists.');
     }
   }
 
   bool _isAllowedDomain(String email) {
-    return email.endsWith('@iskolarngbayan.pup.edu.ph') || 
-           email.endsWith('@pup.edu.ph');
+    return _allowedDomains.any((domain) => email.toLowerCase().endsWith('@$domain'));
   }
 
   // Sign out

@@ -4,6 +4,7 @@ import 'package:iskxpress/core/models/cart_item_model.dart';
 import 'package:iskxpress/core/services/cart_api_service.dart';
 import 'package:iskxpress/core/widgets/custom_app_bar.dart';
 import 'package:flutter/foundation.dart';
+import 'package:iskxpress/presentation/pages/user_cart/checkout_page.dart';
 
 class UserCartPage extends StatefulWidget {
   final int userId;
@@ -300,9 +301,35 @@ class _UserCartPageState extends State<UserCartPage> {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: cart.items.isNotEmpty ? () {
-                          // TODO: Implement checkout
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Checkout functionality coming soon!')),
+                          // Collect checked stall groups
+                          final checkedStallIds = _stallSelection.entries
+                              .where((e) => e.value)
+                              .map((e) => e.key)
+                              .toList();
+                          if (checkedStallIds.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please select at least one stall group to checkout.')),
+                            );
+                            return;
+                          }
+                          // Collect cart items from checked stall groups
+                          final selectedCartItems = cart.items
+                              .where((item) => checkedStallIds.contains(item.stallId))
+                              .toList();
+                          if (selectedCartItems.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('No items found for selected stall groups.')),
+                            );
+                            return;
+                          }
+                          // Navigate to CheckoutPage
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => CheckoutPage(
+                                userId: widget.userId,
+                                cartItems: selectedCartItems,
+                              ),
+                            ),
                           );
                         } : null,
                         style: ElevatedButton.styleFrom(

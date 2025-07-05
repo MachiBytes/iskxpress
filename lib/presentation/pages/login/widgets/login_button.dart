@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
-import 'package:iskxpress/presentation/pages/vendor_home/vendor_home_page.dart';
 import 'package:iskxpress/core/constants/image_strings.dart';
-import 'package:iskxpress/core/helpers/navigation_helper.dart';
 import 'package:iskxpress/core/services/auth_service.dart';
 import 'package:iskxpress/core/services/user_state_service.dart';
+import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
+import 'package:iskxpress/presentation/pages/vendor_home/vendor_home_page.dart';
 
 class LoginButton extends StatefulWidget {
   const LoginButton({
@@ -40,19 +39,38 @@ class _LoginButtonState extends State<LoginButton> {
     }
 
     if (kDebugMode) debugPrint('LoginButton: Calling initializeUser...');
-    
-    // Initialize user in the API
-    final success = await _userStateService.initializeUser(
-      email: email,
-      name: name,
-      authProvider: authProvider,
-    );
+    try {
+      // Initialize user in the API
+      final success = await _userStateService.initializeUser(
+        email: email,
+        name: name,
+        authProvider: authProvider,
+      );
 
-    if (kDebugMode) debugPrint('LoginButton: initializeUser returned: $success');
+      if (kDebugMode) debugPrint('LoginButton: initializeUser returned: $success');
 
-    if (!success) {
-      if (kDebugMode) debugPrint('LoginButton: User initialization failed');
-      throw Exception('Failed to initialize user in the system. Please check your internet connection and try again.');
+      if (!success) {
+        if (kDebugMode) debugPrint('LoginButton: User initialization failed');
+        throw Exception('Failed to initialize user in the system. Please check your internet connection and try again.');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('LoginButton: User initialization error: $e');
+      if (mounted) {
+        String errorMessage = 'Could not connect to the server. Please check your internet connection or try again later.';
+        if (e.toString().contains('SocketException') || e.toString().contains('ClientException') || e.toString().contains('Connection refused')) {
+          errorMessage = 'Cannot connect to the server. Please check your internet connection or try again later.';
+        } else {
+          errorMessage = 'Login failed: ${e.toString()}';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 8),
+          ),
+        );
+      }
+      rethrow;
     }
 
     if (kDebugMode) debugPrint('LoginButton: User initialization completed successfully');
@@ -60,19 +78,36 @@ class _LoginButtonState extends State<LoginButton> {
     // Get the current user data to determine routing
     final currentUser = _userStateService.currentUser;
     if (currentUser == null) {
+      if (kDebugMode) debugPrint('LoginButton: User data not available after initialization');
       throw Exception('User data not available after initialization');
     }
 
     if (kDebugMode) debugPrint('LoginButton: User role: ${currentUser.role} (${currentUser.roleString})');
     
-    // Navigate based on user role using NavHelper
+    // Manual navigation after user initialization
     if (mounted) {
-      if (currentUser.role == 1) {
-        if (kDebugMode) debugPrint('LoginButton: Navigating to VendorHomePage using NavHelper');
-        NavHelper.replacePageTo(context, VendorHomePage());
+      if (authProvider == 1) {
+        // Microsoft: always go to UserHomePage
+        if (kDebugMode) debugPrint('LoginButton: Microsoft user, navigating to UserHomePage');
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => UserHomePage()),
+          (route) => false,
+        );
       } else {
-        if (kDebugMode) debugPrint('LoginButton: Navigating to UserHomePage using NavHelper');
-        NavHelper.replacePageTo(context, UserHomePage());
+        // Google: Vendor role goes to VendorHomePage, else UserHomePage
+        if (currentUser.role == 1) {
+          if (kDebugMode) debugPrint('LoginButton: Google user with Vendor role, navigating to VendorHomePage');
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => VendorHomePage()),
+            (route) => false,
+          );
+        } else {
+          if (kDebugMode) debugPrint('LoginButton: Google user with User role, navigating to UserHomePage');
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => UserHomePage()),
+            (route) => false,
+          );
+        }
       }
     }
   }
@@ -92,21 +127,37 @@ class _LoginButtonState extends State<LoginButton> {
         await _handleUserInitialization(result.user!, 0);
       } else {
         if (kDebugMode) debugPrint('LoginButton: Google sign-in result was null or user was null');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Google sign-in was cancelled or failed. Please try again.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (kDebugMode) debugPrint('LoginButton: Google sign-in error: $e');
       if (mounted) {
-        String errorMessage = 'Google sign-in failed: \\${e.toString()}';
-        // Check if it's a Google email not registered error
-        if (e.toString().contains('GOOGLE_EMAIL_NOT_REGISTERED')) {
+        String errorMessage = 'Google sign-in failed. Please try again.';
+        
+        // Provide more specific error messages based on the error type
+        if (e.toString().contains('network')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (e.toString().contains('cancelled')) {
+          errorMessage = 'Sign-in was cancelled. Please try again.';
+        } else if (e.toString().contains('popup')) {
+          errorMessage = 'Sign-in popup was blocked. Please allow popups and try again.';
+        } else if (e.toString().contains('GOOGLE_EMAIL_NOT_AUTHORIZED')) {
           errorMessage = 'Access Denied: This Google account is not authorized to sign in.';
         }
-        // Show error message
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 8),
+            duration: Duration(seconds: 6),
           ),
         );
       }
@@ -134,18 +185,32 @@ class _LoginButtonState extends State<LoginButton> {
         await _handleUserInitialization(result.user!, 1);
       } else {
         if (kDebugMode) debugPrint('LoginButton: Microsoft sign-in result was null or user was null');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Microsoft sign-in was cancelled or failed. Please try again.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (kDebugMode) debugPrint('LoginButton: Microsoft sign-in error: $e');
       if (mounted) {
-        String errorMessage = 'Microsoft sign-in failed: ${e.toString()}';
+        String errorMessage = 'Microsoft sign-in failed. Please try again.';
         
         // Check if it's a domain restriction error
         if (e.toString().contains('DOMAIN_NOT_ALLOWED')) {
           errorMessage = 'Access Denied: Only @iskolarngbayan.pup.edu.ph and @pup.edu.ph email addresses are allowed to sign in.';
+        } else if (e.toString().contains('network')) {
+          errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else if (e.toString().contains('cancelled')) {
+          errorMessage = 'Sign-in was cancelled. Please try again.';
+        } else if (e.toString().contains('popup')) {
+          errorMessage = 'Sign-in popup was blocked. Please allow popups and try again.';
         }
         
-        // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),

@@ -28,13 +28,6 @@ class GeneralActions extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.shopping_cart),
-                  const SizedBox(width: 8),
-                  Text('Cart'),
-                ],
-              ),
-              Row(
-                children: [
                   Icon(Icons.history),
                   const SizedBox(width: 8),
                   Text('Delivery History'),

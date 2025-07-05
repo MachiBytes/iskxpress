@@ -17,57 +17,69 @@ class MyOrders extends StatelessWidget {
           spacing: 16,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(Icons.timer, size: 36),
-                Text(
-                  'To Prepare',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
+            _buildClickableColumn(
+              context,
+              icon: Icons.timer,
+              label: 'To Prepare',
+              onTap: () => _navigateToOrdersPage(context, 'to_prepare'),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(Icons.shopping_bag, size: 36),
-                Text(
-                  'To Deliver',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
+            _buildClickableColumn(
+              context,
+              icon: Icons.shopping_bag,
+              label: 'To Deliver',
+              onTap: () => _navigateToOrdersPage(context, 'to_deliver'),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(Icons.delivery_dining, size: 36),
-                Text(
-                  'To Receive',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
+            _buildClickableColumn(
+              context,
+              icon: Icons.delivery_dining,
+              label: 'To Receive',
+              onTap: () => _navigateToOrdersPage(context, 'to_receive'),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(Icons.history, size: 36),
-                Text(
-                  'Past Orders',
-                  style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
+            _buildClickableColumn(
+              context,
+              icon: Icons.history,
+              label: 'Past Orders',
+              onTap: () => _navigateToOrdersPage(context, 'past_orders'),
             ),
           ],
         )
       ],
+    );
+  }
+
+  Widget _buildClickableColumn(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(icon, size: 36),
+          Text(
+            label,
+            style: textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToOrdersPage(BuildContext context, String orderType) {
+    // TODO: Navigate to specific order pages when implemented
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$orderType orders page coming soon!'),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 }

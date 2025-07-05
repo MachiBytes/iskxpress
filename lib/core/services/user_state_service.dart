@@ -78,7 +78,7 @@ class UserStateService extends ChangeNotifier {
       
       setLoading(false);
       notifyListeners();
-      if (kDebugMode) debugPrint('UserState: User initialization completed successfully. User ID: ${_currentUser?.id}');
+      if (kDebugMode) debugPrint('UserState: User initialization completed successfully. User ID: ${_currentUser?.id}, Role: ${_currentUser?.role}');
       return true;
     } catch (e) {
       if (kDebugMode) debugPrint('UserState: Error initializing user: $e');
@@ -131,9 +131,9 @@ class UserStateService extends ChangeNotifier {
       if (kDebugMode) debugPrint('UserState: User signed out, clearing user data');
       clearUser();
     } else {
-      // User signed in, but we don't automatically load data here
-      // The app.dart will handle loading user data for authenticated users
-      if (kDebugMode) debugPrint('UserState: User signed in: ${user.email}');
+      // User signed in, but don't automatically load data here
+      // The login flow will handle user initialization
+      if (kDebugMode) debugPrint('UserState: User signed in: ${user.email} (login flow will handle initialization)');
     }
   }
 
@@ -152,7 +152,15 @@ class UserStateService extends ChangeNotifier {
     }
 
     if (kDebugMode) debugPrint('UserState: Auto-loading user data for: ${currentUser.email}');
-    return await loadUserDataForAuthenticatedUser(currentUser.email!);
+    
+    // Try to load user data, but don't fail immediately if not found
+    // The login flow might still be in progress
+    try {
+      return await loadUserDataForAuthenticatedUser(currentUser.email!);
+    } catch (e) {
+      if (kDebugMode) debugPrint('UserState: Auto-load failed, but this might be normal during login: $e');
+      return false;
+    }
   }
 
   // Load user data for an authenticated Firebase user
