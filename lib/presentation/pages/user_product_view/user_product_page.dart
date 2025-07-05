@@ -200,7 +200,7 @@ class _UserProductPageState extends State<UserProductPage>
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isSoldOut = product.availability == 1;
-    final price = product.priceWithDelivery ?? product.sellingPrice;
+    final price = product.priceWithMarkup ?? product.sellingPrice;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

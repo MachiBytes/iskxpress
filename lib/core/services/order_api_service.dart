@@ -22,4 +22,19 @@ class OrderApiService {
       throw Exception('Failed to load orders: ${response.statusCode}');
     }
   }
+
+  static Future<OrderModel> getOrderById(int orderId) async {
+    String url = '${BaseApiService.baseUrl}/api/Order/$orderId';
+    if (kDebugMode) debugPrint('OrderApiService: GET $url');
+    final response = await http.get(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+    );
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      return OrderModel.fromJson(data);
+    } else {
+      throw Exception('Failed to load order: ${response.statusCode}');
+    }
+  }
 } 

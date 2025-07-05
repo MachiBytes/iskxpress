@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:iskxpress/presentation/pages/user_profile/orders/to_prepare_orders_page.dart';
+import 'package:iskxpress/presentation/pages/user_profile/orders/to_deliver_orders_page.dart';
+import 'package:iskxpress/presentation/pages/user_profile/orders/to_receive_orders_page.dart';
+import 'package:iskxpress/presentation/pages/user_profile/orders/past_orders_page.dart';
 
 class MyOrders extends StatelessWidget {
   const MyOrders({super.key});
@@ -74,12 +78,39 @@ class MyOrders extends StatelessWidget {
   }
 
   void _navigateToOrdersPage(BuildContext context, String orderType) {
-    // TODO: Navigate to specific order pages when implemented
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$orderType orders page coming soon!'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    switch (orderType) {
+      case 'to_prepare':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ToPrepareOrdersPage(),
+          ),
+        );
+        break;
+      case 'to_deliver':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ToDeliverOrdersPage(),
+          ),
+        );
+        break;
+      case 'to_receive':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ToReceiveOrdersPage(),
+          ),
+        );
+        break;
+      case 'past_orders':
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PastOrdersPage(),
+          ),
+        );
+        break;
+    }
   }
 }

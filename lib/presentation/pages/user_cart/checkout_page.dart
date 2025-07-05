@@ -23,7 +23,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
   double get _totalPrice {
     double total = 0;
     for (final item in widget.cartItems) {
-      final price = item.product.priceWithDelivery ?? item.product.sellingPrice;
+      final price = _fulfillmentMethod == 1 
+          ? (item.product.priceWithDelivery ?? item.product.sellingPrice)
+          : (item.product.priceWithMarkup ?? item.product.sellingPrice);
       total += price * item.quantity;
     }
     return total;
@@ -108,6 +110,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ],
                 ),
                 if (_fulfillmentMethod == 1) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: Colors.orange,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Delivery fee: ₱10 per item',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: Colors.orange[800],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Text('Delivery', style: textTheme.titleMedium?.copyWith(color: colorScheme.onPrimary)),
                   const SizedBox(height: 8),

@@ -133,7 +133,7 @@ class _UserCartPageState extends State<UserCartPage> {
   double _calculateTotal(UserCartModel cart) {
     double total = 0;
     for (final item in cart.items) {
-      final price = item.product.priceWithDelivery ?? item.product.sellingPrice;
+      final price = item.product.priceWithMarkup ?? item.product.sellingPrice;
       total += price * item.quantity;
     }
     return total;
@@ -361,7 +361,7 @@ class _UserCartPageState extends State<UserCartPage> {
   }
 
   Widget _buildCartItem(CartItemModel item, ColorScheme colorScheme, TextTheme textTheme) {
-    final price = item.product.priceWithDelivery ?? item.product.sellingPrice;
+    final price = item.product.priceWithMarkup ?? item.product.sellingPrice;
     final totalPrice = price * item.quantity;
     final isUpdating = _updatingItems[item.id] ?? false;
 
