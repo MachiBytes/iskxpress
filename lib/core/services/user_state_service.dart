@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:iskxpress/core/models/user_model.dart';
 import 'package:iskxpress/core/services/api_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class UserStateService extends ChangeNotifier {
   static final UserStateService _instance = UserStateService._internal();
@@ -121,5 +122,73 @@ class UserStateService extends ChangeNotifier {
     if (kDebugMode) debugPrint('UserState: Clearing user data');
     _currentUser = null;
     notifyListeners();
+  }
+
+  // Handle authentication state changes
+  void handleAuthStateChange(User? user) {
+    if (user == null) {
+      // User signed out, clear user data
+      if (kDebugMode) debugPrint('UserState: User signed out, clearing user data');
+      clearUser();
+    } else {
+      // User signed in, but we don't automatically load data here
+      // The app.dart will handle loading user data for authenticated users
+      if (kDebugMode) debugPrint('UserState: User signed in: ${user.email}');
+    }
+  }
+
+  // Auto-load user data for authenticated Firebase user
+  Future<bool> autoLoadUserData() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    
+    if (currentUser == null || currentUser.email == null) {
+      if (kDebugMode) debugPrint('UserState: No authenticated Firebase user for auto-load');
+      return false;
+    }
+
+    if (_currentUser != null) {
+      if (kDebugMode) debugPrint('UserState: User data already loaded, skipping auto-load');
+      return true;
+    }
+
+    if (kDebugMode) debugPrint('UserState: Auto-loading user data for: ${currentUser.email}');
+    return await loadUserDataForAuthenticatedUser(currentUser.email!);
+  }
+
+  // Load user data for an authenticated Firebase user
+  Future<bool> loadUserDataForAuthenticatedUser(String email) async {
+    if (kDebugMode) debugPrint('UserState: Loading user data for authenticated user: $email');
+    
+    setLoading(true);
+    
+    try {
+      // Check if user exists in our system
+      Map<String, dynamic>? userData = await ApiService.getUserByEmail(email);
+      
+      if (userData != null) {
+        // User exists, load their data
+        if (kDebugMode) debugPrint('UserState: User exists, loading data: $userData');
+        try {
+          _currentUser = UserModel.fromJson(userData);
+          setLoading(false);
+          notifyListeners();
+          if (kDebugMode) debugPrint('UserState: Successfully loaded user data for authenticated user');
+          return true;
+        } catch (parseError) {
+          if (kDebugMode) debugPrint('UserState: Error parsing user data: $parseError');
+          setLoading(false);
+          return false;
+        }
+      } else {
+        // User doesn't exist in our system - this should not happen for authenticated users
+        if (kDebugMode) debugPrint('UserState: Authenticated user not found in our system - this should not happen');
+        setLoading(false);
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('UserState: Error loading user data for authenticated user: $e');
+      setLoading(false);
+      return false;
+    }
   }
 } 

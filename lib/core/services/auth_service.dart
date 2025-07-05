@@ -43,6 +43,15 @@ class AuthService {
 
       if (kDebugMode) debugPrint('AuthService: Google user obtained: ${googleUser.email}');
 
+      // Restrict: Only allow Google sign-in if email is already registered in Firebase Auth
+      final List<String> signInMethods = await _auth.fetchSignInMethodsForEmail(googleUser.email);
+      if (kDebugMode) debugPrint('AuthService: Sign-in methods for email: ${signInMethods.join(", ")}');
+      if (signInMethods.isEmpty || !signInMethods.contains('google.com')) {
+        if (kDebugMode) debugPrint('AuthService: Google email not registered in Firebase Auth, denying login');
+        await _googleSignIn.signOut();
+        throw Exception('GOOGLE_EMAIL_NOT_REGISTERED: This Google account is not authorized to sign in.');
+      }
+
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 

@@ -16,7 +16,7 @@ class SectionFormDialog extends StatefulWidget {
 class _SectionFormDialogState extends State<SectionFormDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void initState() {

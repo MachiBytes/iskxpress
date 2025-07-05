@@ -7,6 +7,7 @@ import 'package:iskxpress/presentation/pages/vendor_home/widgets/product_section
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/add_section_button.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/product_form_dialog.dart';
 import 'package:iskxpress/presentation/pages/vendor_home/widgets/section_form_dialog.dart';
+import 'package:iskxpress/core/widgets/auth_guard.dart';
 import '../../../core/services/user_state_service.dart';
 import '../../../core/services/stall_state_service.dart';
 import '../../../core/services/api_service.dart';
@@ -125,42 +126,45 @@ class _VendorHomePageState extends State<VendorHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: const VendorAppBar(title: 'Vendor Home'),
-      bottomNavigationBar: const VendorBottomNavBar(currentIndex: 0),
-      body: Stack(
-        children: [
-          _isInitialLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _errorMessage != null
-                  ? _buildErrorWidget()
-                  : _buildContent(),
-          
-          // Loading overlay for product operations
-          if (_isProcessing)
-            Container(
-              color: Colors.black.withOpacity(0.3),
-              child: const Center(
-                child: Card(
-                  child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text(
-                          'Processing...',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
+    return AuthGuard(
+      requireVendorRole: true,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: const VendorAppBar(title: 'Vendor Home'),
+        bottomNavigationBar: const VendorBottomNavBar(currentIndex: 0),
+        body: Stack(
+          children: [
+            _isInitialLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? _buildErrorWidget()
+                    : _buildContent(),
+            
+            // Loading overlay for product operations
+            if (_isProcessing)
+              Container(
+                color: Colors.black.withOpacity(0.3),
+                child: const Center(
+                  child: Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(20.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Processing...',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -373,7 +377,7 @@ class _VendorHomePageState extends State<VendorHomePage> {
     if (result != null) {
       final stall = _stallStateService.currentStall;
       if (stall != null) {
-        if (kDebugMode) debugPrint('VENDOR_HOME: Creating product: ${result}');
+        if (kDebugMode) debugPrint('VENDOR_HOME: Creating product: $result');
         
         setState(() {
           _isProcessing = true;
@@ -442,7 +446,7 @@ class _VendorHomePageState extends State<VendorHomePage> {
     );
 
     if (result != null) {
-      if (kDebugMode) debugPrint('VENDOR_HOME: Updating product: ${result}');
+      if (kDebugMode) debugPrint('VENDOR_HOME: Updating product: $result');
       
       setState(() {
         _isProcessing = true;

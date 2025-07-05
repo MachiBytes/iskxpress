@@ -96,10 +96,15 @@ class _LoginButtonState extends State<LoginButton> {
     } catch (e) {
       if (kDebugMode) debugPrint('LoginButton: Google sign-in error: $e');
       if (mounted) {
+        String errorMessage = 'Google sign-in failed: \\${e.toString()}';
+        // Check if it's a Google email not registered error
+        if (e.toString().contains('GOOGLE_EMAIL_NOT_REGISTERED')) {
+          errorMessage = 'Access Denied: This Google account is not authorized to sign in.';
+        }
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Google sign-in failed: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
             duration: Duration(seconds: 8),
           ),

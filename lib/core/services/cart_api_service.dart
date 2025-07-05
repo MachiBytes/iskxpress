@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/user_cart_model.dart';
-import '../models/cart_item_model.dart';
 import 'base_api_service.dart';
 
 class CartApiService {

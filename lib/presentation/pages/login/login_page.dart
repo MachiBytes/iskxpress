@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:iskxpress/presentation/pages/login/widgets/login_page_form.dart';
-import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
 import 'package:iskxpress/core/services/api_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -31,14 +30,6 @@ class _LoginPageState extends State<LoginPage> {
       // Sync failure is not critical for login flow - users can still authenticate
       // This is likely a server-side configuration issue (missing firebase-key.json)
     }
-  }
-
-  void googleSignin(BuildContext context) {
-    Navigator.pushNamed(context, UserHomePage.routeName);
-  }
-
-  void microsoftSignin(BuildContext context) {
-    Navigator.pushNamed(context, UserHomePage.routeName);
   }
 
   @override

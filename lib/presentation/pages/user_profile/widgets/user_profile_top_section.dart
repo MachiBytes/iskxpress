@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:iskxpress/presentation/pages/user_profile/widgets/get_verified_button.dart';
 import 'package:iskxpress/presentation/pages/user_profile/widgets/user_profile_picture.dart';
 import 'package:iskxpress/core/services/user_state_service.dart';

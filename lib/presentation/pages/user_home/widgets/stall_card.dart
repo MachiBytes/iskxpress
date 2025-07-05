@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:iskxpress/core/constants/image_strings.dart';
 
 class StallCard extends StatelessWidget {
   const StallCard({

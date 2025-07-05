@@ -15,10 +15,10 @@ class UserCartPage extends StatefulWidget {
 
 class _UserCartPageState extends State<UserCartPage> {
   late Future<UserCartModel> _cartFuture;
-  Map<int, bool> _stallSelection = {};
-  bool _isLoading = false;
+  final Map<int, bool> _stallSelection = {};
+  final bool _isLoading = false;
   UserCartModel? _currentCart; // Cache the current cart data
-  Map<int, bool> _updatingItems = {}; // Track which items are being updated
+  final Map<int, bool> _updatingItems = {}; // Track which items are being updated
 
   @override
   void initState() {
@@ -259,7 +259,7 @@ class _UserCartPageState extends State<UserCartPage> {
                           ],
                         ),
                       );
-                    }).toList(),
+                    }),
                   ],
                 ),
               ),
