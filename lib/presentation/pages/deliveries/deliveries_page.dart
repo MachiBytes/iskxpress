@@ -137,10 +137,30 @@ class _DeliveriesPageState extends State<DeliveriesPage> with SingleTickerProvid
         debugPrint('DeliveriesPage: Error accepting delivery: $e');
       }
       if (mounted) {
+        String errorMessage = 'Failed to accept delivery';
+        
+        // Check if it's the specific ongoing orders limit error
+        if (e.toString().contains('ongoing orders') && e.toString().contains('Maximum allowed is 3')) {
+          errorMessage = 'You already have 3 ongoing deliveries. Please complete some deliveries before accepting new ones.';
+        } else if (e.toString().contains('ArgumentException')) {
+          // Extract the user-friendly message from ArgumentException
+          final errorString = e.toString();
+          final startIndex = errorString.indexOf('ArgumentException: ');
+          if (startIndex != -1) {
+            final messageStart = startIndex + 'ArgumentException: '.length;
+            final message = errorString.substring(messageStart);
+            errorMessage = message;
+          }
+        } else {
+          // For other errors, show a generic message
+          errorMessage = 'Failed to accept delivery. Please try again.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to accept delivery: $e'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5), // Show for longer duration for important errors
           ),
         );
       }
@@ -179,7 +199,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> with SingleTickerProvid
                                   address: DateFormatter.truncateAddress(request.deliveryAddress ?? 'No address'),
                                   orderedAt: DateFormatter.formatOrderTime(request.createdAt),
                                   orderId: request.id.toString(),
-                                  totalFee: request.totalSellingPrice,
+                                  totalFee: request.totalPrice,
                                   deliveryFee: request.deliveryFee,
                                   onAcceptDelivery: () => _acceptDelivery(request),
                                   onViewDetails: () {
@@ -214,7 +234,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> with SingleTickerProvid
                               address: DateFormatter.truncateAddress(delivery.deliveryAddress ?? 'No address'),
                               orderedAt: DateFormatter.formatOrderTime(delivery.createdAt),
                               orderId: delivery.id.toString(),
-                              totalFee: delivery.totalSellingPrice,
+                              totalFee: delivery.totalPrice,
                               deliveryFee: delivery.deliveryFee,
                               statusText: delivery.statusText,
                               onManageDelivery: () {

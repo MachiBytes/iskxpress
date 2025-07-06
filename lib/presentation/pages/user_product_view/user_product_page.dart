@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:iskxpress/core/models/stall_model.dart';
 import 'package:iskxpress/core/models/section_model.dart';
 import 'package:iskxpress/core/models/product_model.dart';
+import 'package:iskxpress/core/models/user_model.dart';
 import 'package:iskxpress/core/services/section_api_service.dart';
 import 'package:iskxpress/core/services/product_api_service.dart';
-import 'package:iskxpress/presentation/pages/user_product_view/widgets/user_product_app_bar.dart';
 import 'package:iskxpress/core/services/cart_api_service.dart';
 import 'package:iskxpress/core/services/user_state_service.dart';
+import 'package:iskxpress/core/utils/pricing_utils.dart';
+import 'package:iskxpress/presentation/pages/user_product_view/widgets/user_product_app_bar.dart';
 import 'package:iskxpress/presentation/pages/user_cart/user_cart_page.dart';
 import 'package:iskxpress/core/helpers/navigation_helper.dart';
 import 'package:flutter/foundation.dart';
@@ -200,7 +202,11 @@ class _UserProductPageState extends State<UserProductPage>
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final isSoldOut = product.availability == 1;
-    final price = product.priceWithMarkup ?? product.sellingPrice;
+    final userStateService = UserStateService();
+    final user = userStateService.currentUser;
+    final price = PricingUtils.getPriceForUser(product, user);
+    final regularPrice = PricingUtils.getRegularPrice(product);
+    final isPremium = user?.premium == true;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,13 +351,37 @@ class _UserProductPageState extends State<UserProductPage>
           overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
-        // Price
-        Text(
-          '₱${price.toStringAsFixed(2)}',
-          style: textTheme.titleSmall?.copyWith(
-            color: isSoldOut ? Colors.grey : colorScheme.primary,
-            fontWeight: FontWeight.bold,
-          ),
+        // Price with premium indicator
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '₱${price.toStringAsFixed(2)}',
+              style: textTheme.titleSmall?.copyWith(
+                color: isSoldOut ? Colors.grey : colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (isPremium && !isSoldOut) ...[
+              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                ),
+                child: Text(
+                  'Premium',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: Colors.green,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ],
     );

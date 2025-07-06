@@ -151,4 +151,28 @@ class UserApiService {
       return [];
     }
   }
+
+  // Toggle premium status for user
+  static Future<bool> togglePremium(int userId) async {
+    try {
+      if (kDebugMode) debugPrint('USER_API: Toggling premium for user: $userId');
+      final response = await http.post(
+        Uri.parse('${BaseApiService.baseUrl}/api/users/$userId/toggle-premium'),
+        headers: BaseApiService.jsonHeaders,
+      );
+
+      if (kDebugMode) debugPrint('USER_API: Toggle premium response - Status: ${response.statusCode}, Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        if (kDebugMode) debugPrint('USER_API: Successfully toggled premium status');
+        return true;
+      } else {
+        if (kDebugMode) debugPrint('USER_API: Toggle premium failed with status ${response.statusCode}: ${response.body}');
+        throw Exception('Failed to toggle premium: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('USER_API: Error toggling premium: $e');
+      return false;
+    }
+  }
 } 

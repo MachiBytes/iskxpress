@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:iskxpress/core/models/user_cart_model.dart';
 import 'package:iskxpress/core/models/cart_item_model.dart';
 import 'package:iskxpress/core/services/cart_api_service.dart';
+import 'package:iskxpress/core/services/user_state_service.dart';
+import 'package:iskxpress/core/utils/pricing_utils.dart';
 import 'package:iskxpress/core/widgets/custom_app_bar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:iskxpress/presentation/pages/user_cart/checkout_page.dart';
@@ -131,12 +133,35 @@ class _UserCartPageState extends State<UserCartPage> {
   }
 
   double _calculateTotal(UserCartModel cart) {
+    final userStateService = UserStateService();
+    final user = userStateService.currentUser;
+    
     double total = 0;
     for (final item in cart.items) {
-      final price = item.product.priceWithMarkup ?? item.product.sellingPrice;
+      final price = PricingUtils.getPriceForUser(item.product, user);
       total += price * item.quantity;
     }
     return total;
+  }
+
+  double _calculateRegularTotal(UserCartModel cart) {
+    double total = 0;
+    for (final item in cart.items) {
+      final price = PricingUtils.getRegularPrice(item.product);
+      total += price * item.quantity;
+    }
+    return total;
+  }
+
+  double _calculateSavings(UserCartModel cart) {
+    final userStateService = UserStateService();
+    final user = userStateService.currentUser;
+    
+    if (user?.premium != true) return 0;
+    
+    final regularTotal = _calculateRegularTotal(cart);
+    final premiumTotal = _calculateTotal(cart);
+    return regularTotal - premiumTotal;
   }
 
   @override
@@ -276,23 +301,52 @@ class _UserCartPageState extends State<UserCartPage> {
                         color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
                         children: [
-                          Text(
-                            'Total',
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Total',
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                '₱${_calculateTotal(cart).toStringAsFixed(2)}',
+                                style: textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '₱${_calculateTotal(cart).toStringAsFixed(2)}',
-                            style: textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.primary,
+                          if (_calculateSavings(cart) > 0) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.savings, size: 16, color: Colors.green),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'You saved ₱${_calculateSavings(cart).toStringAsFixed(2)}',
+                                    style: textTheme.bodySmall?.copyWith(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
@@ -361,7 +415,9 @@ class _UserCartPageState extends State<UserCartPage> {
   }
 
   Widget _buildCartItem(CartItemModel item, ColorScheme colorScheme, TextTheme textTheme) {
-    final price = item.product.priceWithMarkup ?? item.product.sellingPrice;
+    final userStateService = UserStateService();
+    final user = userStateService.currentUser;
+    final price = PricingUtils.getPriceForUser(item.product, user);
     final totalPrice = price * item.quantity;
     final isUpdating = _updatingItems[item.id] ?? false;
 

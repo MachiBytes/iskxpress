@@ -310,4 +310,45 @@ class StallApiService {
       return [];
     }
   }
+
+  static Future<double> getPendingFees(int stallId) async {
+    String url = '${BaseApiService.baseUrl}/api/stalls/$stallId/pending-fees';
+    if (kDebugMode) debugPrint('StallApiService: GET $url');
+    
+    final response = await http.get(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+    );
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = json.decode(response.body);
+      final pendingFees = (data['pendingFees'] ?? 0.0).toDouble();
+      if (kDebugMode) debugPrint('StallApiService: Pending fees: $pendingFees');
+      return pendingFees;
+    } else {
+      if (kDebugMode) debugPrint('StallApiService: Failed to get pending fees: ${response.statusCode}');
+      throw Exception('Failed to get pending fees: ${response.statusCode}');
+    }
+  }
+
+  static Future<bool> subtractPendingFees(int stallId, double amount) async {
+    String url = '${BaseApiService.baseUrl}/api/stalls/$stallId/pending-fees/subtract';
+    if (kDebugMode) debugPrint('StallApiService: PUT $url with amount: $amount');
+    
+    final response = await http.put(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+      body: json.encode({
+        'amount': amount,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      if (kDebugMode) debugPrint('StallApiService: Successfully subtracted pending fees');
+      return true;
+    } else {
+      if (kDebugMode) debugPrint('StallApiService: Failed to subtract pending fees: ${response.statusCode}');
+      throw Exception('Failed to subtract pending fees: ${response.statusCode}');
+    }
+  }
 } 

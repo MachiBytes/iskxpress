@@ -7,11 +7,12 @@ class OrderModel {
   final int fulfillmentMethod;
   final String? deliveryAddress;
   final String? notes;
-  final double totalSellingPrice;
   final double deliveryFee;
-  final double totalPrice;
+  final double totalCommissionFee;
   final DateTime createdAt;
   final List<OrderItemModel> items;
+  final int? deliveryPartnerId;
+  final String? rejectionReason;
 
   OrderModel({
     required this.id,
@@ -22,11 +23,12 @@ class OrderModel {
     required this.fulfillmentMethod,
     this.deliveryAddress,
     this.notes,
-    required this.totalSellingPrice,
     required this.deliveryFee,
-    required this.totalPrice,
+    required this.totalCommissionFee,
     required this.createdAt,
     required this.items,
+    this.deliveryPartnerId,
+    this.rejectionReason,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -39,17 +41,28 @@ class OrderModel {
       fulfillmentMethod: json['fulfillmentMethod'] ?? 0,
       deliveryAddress: json['deliveryAddress'],
       notes: json['notes'],
-      totalSellingPrice: (json['totalSellingPrice'] ?? 0.0).toDouble(),
       deliveryFee: (json['deliveryFee'] ?? 0.0).toDouble(),
-      totalPrice: (json['totalPrice'] ?? 0.0).toDouble(),
+      totalCommissionFee: (json['totalCommissionFee'] ?? 0.0).toDouble(),
       createdAt: DateTime.parse(json['createdAt']),
       items: (json['orderItems'] as List<dynamic>? ?? [])
           .map((item) => OrderItemModel.fromJson(item)).toList(),
+      deliveryPartnerId: json['deliveryPartnerId'],
+      rejectionReason: json['rejectionReason'],
     );
   }
 
   String get createdAtString =>
       '${createdAt.year}-${createdAt.month.toString().padLeft(2, '0')}-${createdAt.day.toString().padLeft(2, '0')}';
+      
+  // TotalPrice is now the sum of all PriceWithMarkup * Quantity (from backend)
+  double get totalPrice {
+    return items.fold(0.0, (sum, item) => sum + item.totalPrice);
+  }
+  
+  // Calculate final total (items + delivery fee)
+  double get finalTotal {
+    return totalPrice + deliveryFee;
+  }
       
   String get statusText {
     switch (status) {
@@ -63,6 +76,8 @@ class OrderModel {
         return 'To Receive';
       case 4:
         return 'Completed';
+      case 5:
+        return 'Rejected';
       default:
         return 'Unknown';
     }
@@ -89,6 +104,7 @@ class OrderItemModel {
   final int quantity;
   final double priceEach;
   final double totalPrice;
+  final double commissionFee;
 
   OrderItemModel({
     required this.id,
@@ -99,6 +115,7 @@ class OrderItemModel {
     required this.quantity,
     required this.priceEach,
     required this.totalPrice,
+    required this.commissionFee,
   });
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
@@ -111,6 +128,7 @@ class OrderItemModel {
       quantity: json['quantity'] ?? 1,
       priceEach: (json['priceEach'] ?? 0.0).toDouble(),
       totalPrice: (json['totalPrice'] ?? 0.0).toDouble(),
+      commissionFee: (json['commissionFee'] ?? 0.0).toDouble(),
     );
   }
 } 

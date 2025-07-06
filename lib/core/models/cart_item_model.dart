@@ -29,6 +29,7 @@ class CartItemModel {
       imageUrl: json['productPictureUrl'],
       availability: json['productAvailability'] ?? 0,
       priceWithMarkup: json['productPriceWithMarkup'] != null ? (json['productPriceWithMarkup'] as num).toDouble() : null,
+      premiumUserPrice: json['productPremiumUserPrice'] != null ? (json['productPremiumUserPrice'] as num).toDouble() : null,
     );
 
     return CartItemModel(

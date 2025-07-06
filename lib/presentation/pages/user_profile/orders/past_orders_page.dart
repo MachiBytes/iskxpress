@@ -44,11 +44,12 @@ class _PastOrdersPageState extends State<PastOrdersPage> {
         return;
       }
 
-      // Load orders with status 4 (Accomplished)
-      final orders = await OrderApiService.getUserOrders(currentUser.id, status: 4);
+      // Load all orders and filter for completed (status 4) and rejected (status 5)
+      final allOrders = await OrderApiService.getUserOrders(currentUser.id);
+      final pastOrders = allOrders.where((order) => order.status == 4 || order.status == 5).toList();
       
       setState(() {
-        _orders = orders;
+        _orders = pastOrders;
         _isLoading = false;
       });
     } catch (e) {
@@ -134,11 +135,15 @@ class _PastOrdersPageState extends State<PastOrdersPage> {
                         itemCount: _orders.length,
                         itemBuilder: (context, index) {
                           final order = _orders[index];
+                          final isRejected = order.status == 5;
+                          
                           return OrderCard(
                             order: order,
-                            statusText: 'Completed',
-                            statusColor: Colors.grey,
-                            additionalInfo: 'Completed on ${order.createdAtString}',
+                            statusText: order.statusText,
+                            statusColor: isRejected ? Colors.red : Colors.grey,
+                            additionalInfo: isRejected 
+                                ? 'Rejected on ${order.createdAtString}'
+                                : 'Completed on ${order.createdAtString}',
                             onViewDetails: () {
                               Navigator.push(
                                 context,

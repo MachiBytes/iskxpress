@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:iskxpress/presentation/pages/user_profile/widgets/get_verified_button.dart';
 import 'package:iskxpress/presentation/pages/user_profile/widgets/user_profile_picture.dart';
 import 'package:iskxpress/core/services/user_state_service.dart';
 import 'package:iskxpress/core/models/user_model.dart';
+import 'package:iskxpress/presentation/pages/user_profile/widgets/get_premium_button.dart';
 
 class UserProfileTopSection extends StatefulWidget {
   const UserProfileTopSection({super.key});
@@ -107,10 +107,10 @@ class _UserProfileTopSectionState extends State<UserProfileTopSection> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                          user.verified ? 'Verified' : 'Unverified',
+                          user.premium ? 'Premium' : 'Standard',
                       style: textTheme.bodySmall?.copyWith(
-                            color: user.verified 
-                            ? Colors.green 
+                            color: user.premium 
+                            ? Colors.amber 
                             : colorScheme.onPrimary,
                       ),
                     ),
@@ -135,7 +135,7 @@ class _UserProfileTopSectionState extends State<UserProfileTopSection> {
             ],
           ),
           const SizedBox(height: 16),
-              GetVerifiedButton(isVerified: user.verified),
+              GetPremiumButton(),
         ],
       ),
         );

@@ -3,25 +3,33 @@ import 'package:iskxpress/core/models/order_model.dart';
 import 'package:iskxpress/core/services/order_api_service.dart';
 import 'package:iskxpress/core/widgets/loading_screen.dart';
 import 'package:iskxpress/core/utils/date_formatter.dart';
+import 'package:iskxpress/core/services/user_state_service.dart';
 
-class DeliveryOrderDetailsPage extends StatefulWidget {
+class VendorOrderDetailsPage extends StatefulWidget {
   final int orderId;
-  const DeliveryOrderDetailsPage({super.key, required this.orderId});
+  const VendorOrderDetailsPage({super.key, required this.orderId});
 
   @override
-  State<DeliveryOrderDetailsPage> createState() => _DeliveryOrderDetailsPageState();
+  State<VendorOrderDetailsPage> createState() => _VendorOrderDetailsPageState();
 }
 
-class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
+class _VendorOrderDetailsPageState extends State<VendorOrderDetailsPage> {
   OrderModel? _order;
   bool _isLoading = true;
   String? _error;
   bool _isUpdatingStatus = false;
+  final TextEditingController _rejectionReasonController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadOrder();
+  }
+
+  @override
+  void dispose() {
+    _rejectionReasonController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadOrder() async {
@@ -67,59 +75,149 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
     }
   }
 
-  Widget _buildActionButton(ColorScheme colorScheme, TextTheme textTheme) {
+  Future<void> _showRejectionDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Reject Order'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Please provide a reason for rejecting this order:'),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _rejectionReasonController,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Rejection Reason',
+                  hintText: 'Enter reason for rejection...',
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Reject'),
+              onPressed: () async {
+                if (_rejectionReasonController.text.trim().isNotEmpty) {
+                  Navigator.of(context).pop();
+                  
+                  setState(() {
+                    _isUpdatingStatus = true;
+                  });
+
+                  try {
+                    await OrderApiService.rejectOrder(widget.orderId, _rejectionReasonController.text.trim());
+                    // Reload the order to get updated data
+                    await _loadOrder();
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to reject order: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  } finally {
+                    setState(() {
+                      _isUpdatingStatus = false;
+                    });
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please provide a rejection reason'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButtons(ColorScheme colorScheme, TextTheme textTheme) {
     if (_order == null) return const SizedBox.shrink();
 
-    // Status 0 or 1: Waiting for stall
-    if (_order!.status == 0 || _order!.status == 1) {
-      return ElevatedButton(
-        onPressed: null, // Disabled
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    final currentUserId = UserStateService().currentUser?.id;
+    final isVendorOrder = _order!.deliveryPartnerId == currentUserId;
+    final isDelivery = _order!.fulfillmentMethod == 1;
+
+    // Status 0: Pending - Show Accept/Reject buttons
+    if (_order!.status == 0) {
+      return Row(
+        children: [
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _isUpdatingStatus ? null : () => _updateOrderStatus(1),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              child: _isUpdatingStatus
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Text(
+                      'Accept Order',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onPrimary,
+                      ),
+                    ),
+            ),
           ),
-          elevation: 0,
-        ),
-        child: Text(
-          'Waiting for stall',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _isUpdatingStatus ? null : _showRejectionDialog,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              child: Text(
+                'Reject Order',
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       );
     }
 
-    // Status 2: Ready for pickup
+    // Status 2: Product picked up
     if (_order!.status == 2) {
       return ElevatedButton(
-        onPressed: null, // Disabled
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.grey,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          'Ready for pickup',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-
-    // Status 3: Order Delivered!
-    if (_order!.status == 3) {
-      return ElevatedButton(
-        onPressed: _isUpdatingStatus ? null : () => _updateOrderStatus(4),
+        onPressed: _isUpdatingStatus ? null : () => _updateOrderStatus(3),
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.primary,
           foregroundColor: colorScheme.onPrimary,
@@ -139,7 +237,7 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
                 ),
               )
             : Text(
-                'Order Delivered!',
+                'Product picked up',
                 style: textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onPrimary,
@@ -148,7 +246,164 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
       );
     }
 
-    // Default case: no button
+    // Case 1: Vendor is the delivery partner
+    if (isVendorOrder) {
+      if (_order!.status == 1) {
+        return ElevatedButton(
+          onPressed: _isUpdatingStatus ? null : () => _updateOrderStatus(3),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+          ),
+          child: _isUpdatingStatus
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  isDelivery ? 'Ready to receive' : 'Ready to pickup',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimary,
+                  ),
+                ),
+        );
+      } else if (_order!.status == 3) {
+        return ElevatedButton(
+          onPressed: _isUpdatingStatus ? null : () => _updateOrderStatus(4),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+          ),
+          child: _isUpdatingStatus
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  'Order Received!',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimary,
+                  ),
+                ),
+        );
+      }
+    }
+
+    // Case 2: Vendor is not the delivery partner but fulfillment is delivery
+    if (!isVendorOrder && isDelivery) {
+      if (_order!.status == 1) {
+        return ElevatedButton(
+          onPressed: _isUpdatingStatus ? null : () => _updateOrderStatus(2),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 2,
+          ),
+          child: _isUpdatingStatus
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  'Ready for delivery',
+                  style: textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onPrimary,
+                  ),
+                ),
+        );
+      } else if (_order!.status == 2) {
+        return ElevatedButton(
+          onPressed: null, // Disabled
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            'Waiting for delivery',
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        );
+      } else if (_order!.status == 3) {
+        return ElevatedButton(
+          onPressed: null, // Disabled
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            'Waiting to be received',
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        );
+      } else if (_order!.status == 4) {
+        return ElevatedButton(
+          onPressed: null, // Disabled
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.grey,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: 0,
+          ),
+          child: Text(
+            'Order Finished!',
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        );
+      }
+    }
+
+    // Default case: no action buttons
     return const SizedBox.shrink();
   }
 
@@ -221,11 +476,11 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
                             ),
                           ),
                         ),
-                        // Action Button
+                        // Action Buttons
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(16.0),
-                          child: _buildActionButton(colorScheme, textTheme),
+                          child: _buildActionButtons(colorScheme, textTheme),
                         ),
                       ],
                     ),
@@ -246,7 +501,7 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getStatusColor(_order!.status).withValues(alpha: 0.2),
+                color: _getStatusColor(_order!.status).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _getStatusColor(_order!.status),
@@ -265,7 +520,7 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: colorScheme.onPrimary.withValues(alpha: 0.2),
+                color: colorScheme.onPrimary.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: colorScheme.onPrimary,
@@ -304,6 +559,13 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
           'Subtotal: ₱${_order!.totalPrice.toStringAsFixed(2)}',
           style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
         ),
+        if (_order!.totalCommissionFee > 0) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Commission Fee: ₱${_order!.totalCommissionFee.toStringAsFixed(2)}',
+            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+          ),
+        ],
         if (_order!.deliveryFee > 0) ...[
           const SizedBox(height: 8),
           Text(
@@ -365,7 +627,7 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
                         child: Icon(
                           Icons.fastfood,
                           size: 24,
-                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                          color: colorScheme.onSurface.withOpacity(0.5),
                         ),
                       ),
                     ),
@@ -380,7 +642,7 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
                     child: Icon(
                       Icons.fastfood,
                       size: 24,
-                      color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: colorScheme.onSurface.withOpacity(0.5),
                     ),
                   ),
             title: Text(
@@ -397,7 +659,7 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
                   Text(
                     item.productDescription!,
                     style: textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: colorScheme.onSurface.withOpacity(0.7),
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -407,7 +669,7 @@ class _DeliveryOrderDetailsPageState extends State<DeliveryOrderDetailsPage> {
                 Text(
                   '₱${item.priceEach.toStringAsFixed(2)} each × ${item.quantity}',
                   style: textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                    color: colorScheme.onSurface.withOpacity(0.7),
                   ),
                 ),
               ],

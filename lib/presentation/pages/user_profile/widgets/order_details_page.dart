@@ -179,7 +179,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Subtotal: ₱${_order!.totalSellingPrice.toStringAsFixed(2)}',
+          'Subtotal: ₱${_order!.totalPrice.toStringAsFixed(2)}',
           style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
         ),
         if (_order!.deliveryFee > 0) ...[
@@ -191,7 +191,7 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         ],
         const SizedBox(height: 8),
         Text(
-          'Total: ₱${_order!.totalPrice.toStringAsFixed(2)}',
+          'Total: ₱${_order!.finalTotal.toStringAsFixed(2)}',
           style: textTheme.titleMedium?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
@@ -209,6 +209,46 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
           Text(
             'Notes: ${_order!.notes}',
             style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+          ),
+        ],
+        if (_order!.status == 5 && _order!.rejectionReason != null && _order!.rejectionReason!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.cancel_outlined,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Rejection Reason',
+                      style: textTheme.titleSmall?.copyWith(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _order!.rejectionReason!,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: Colors.red.shade700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ],
@@ -315,6 +355,8 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         return Colors.green;
       case 4:
         return Colors.grey;
+      case 5:
+        return Colors.red;
       default:
         return Colors.grey;
     }

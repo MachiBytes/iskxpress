@@ -3,6 +3,7 @@ class UserModel {
   final String name;
   final String email;
   final bool verified;
+  final bool premium;
   final int authProvider;
   final String authProviderString;
   final int role;
@@ -17,6 +18,7 @@ class UserModel {
     required this.name,
     required this.email,
     required this.verified,
+    required this.premium,
     required this.authProvider,
     required this.authProviderString,
     required this.role,
@@ -33,6 +35,7 @@ class UserModel {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       verified: json['verified'] ?? false,
+      premium: json['premium'] ?? false,
       authProvider: json['authProvider'] ?? 0,
       authProviderString: json['authProviderString'] ?? '',
       role: json['role'] ?? 0,
@@ -50,6 +53,7 @@ class UserModel {
       'name': name,
       'email': email,
       'verified': verified,
+      'premium': premium,
       'authProvider': authProvider,
       'authProviderString': authProviderString,
       'role': role,
@@ -66,6 +70,7 @@ class UserModel {
     String? name,
     String? email,
     bool? verified,
+    bool? premium,
     int? authProvider,
     String? authProviderString,
     int? role,
@@ -80,6 +85,7 @@ class UserModel {
       name: name ?? this.name,
       email: email ?? this.email,
       verified: verified ?? this.verified,
+      premium: premium ?? this.premium,
       authProvider: authProvider ?? this.authProvider,
       authProviderString: authProviderString ?? this.authProviderString,
       role: role ?? this.role,

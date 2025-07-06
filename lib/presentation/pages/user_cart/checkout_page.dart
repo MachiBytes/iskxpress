@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:iskxpress/core/models/cart_item_model.dart';
 import 'package:iskxpress/core/services/cart_api_service.dart';
+import 'package:iskxpress/core/services/user_state_service.dart';
+import 'package:iskxpress/core/utils/pricing_utils.dart';
 import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -20,24 +22,50 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool _isLoading = false;
 
   double get _totalPrice {
-    double total = 0;
-    Set<int> uniqueStalls = {};
+    final userStateService = UserStateService();
+    final user = userStateService.currentUser;
+    List<int> stallIds = [];
     
+    double total = 0;
     for (final item in widget.cartItems) {
-      // Use priceWithMarkup for all items
-      final price = item.product.priceWithMarkup ?? item.product.sellingPrice;
+      final price = PricingUtils.getPriceForUser(item.product, user);
       total += price * item.quantity;
-      
-      // Track unique stalls for delivery fee calculation
-      uniqueStalls.add(item.stallId);
+      stallIds.add(item.stallId);
     }
     
-    // Add delivery fee: ₱10 per unique stall
+    // Add delivery fee (0 for premium users)
     if (_fulfillmentMethod == 1) {
-      total += uniqueStalls.length * 10;
+      total += PricingUtils.calculateDeliveryFee(stallIds, user);
     }
     
     return total;
+  }
+
+  double get _regularTotalPrice {
+    List<int> stallIds = [];
+    
+    double total = 0;
+    for (final item in widget.cartItems) {
+      final price = PricingUtils.getRegularPrice(item.product);
+      total += price * item.quantity;
+      stallIds.add(item.stallId);
+    }
+    
+    // Add delivery fee for regular users
+    if (_fulfillmentMethod == 1) {
+      total += PricingUtils.calculateDeliveryFee(stallIds, null);
+    }
+    
+    return total;
+  }
+
+  double get _savings {
+    final userStateService = UserStateService();
+    final user = userStateService.currentUser;
+    
+    if (user?.premium != true) return 0;
+    
+    return _regularTotalPrice - _totalPrice;
   }
 
   Future<void> _handleCheckout() async {
@@ -120,32 +148,42 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
                 if (_fulfillmentMethod == 1) ...[
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Colors.orange,
-                          size: 20,
+                  Builder(
+                    builder: (context) {
+                      final userStateService = UserStateService();
+                      final user = userStateService.currentUser;
+                      final isPremium = user?.premium == true;
+                      
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isPremium ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: isPremium ? Colors.green.withOpacity(0.3) : Colors.orange.withOpacity(0.3)),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Delivery fee: ₱10 per stall',
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: Colors.orange[800],
-                              fontWeight: FontWeight.w500,
+                        child: Row(
+                          children: [
+                            Icon(
+                              isPremium ? Icons.check_circle : Icons.info_outline,
+                              color: isPremium ? Colors.green : Colors.orange,
+                              size: 20,
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                isPremium 
+                                  ? 'Free delivery for Premium users!'
+                                  : 'Delivery fee: ₱10 per stall',
+                                style: textTheme.bodyMedium?.copyWith(
+                                  color: isPremium ? Colors.green[800] : Colors.orange[800],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   Text('Delivery', style: textTheme.titleMedium?.copyWith(color: colorScheme.onPrimary)),
@@ -174,11 +212,41 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ),
                 ],
                 const SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('Total', style: textTheme.titleLarge?.copyWith(color: colorScheme.onPrimary)),
-                    Text('₱${_totalPrice.toStringAsFixed(2)}', style: textTheme.titleLarge?.copyWith(color: colorScheme.onPrimary)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Total', style: textTheme.titleLarge?.copyWith(color: colorScheme.onPrimary)),
+                        Text('₱${_totalPrice.toStringAsFixed(2)}', style: textTheme.titleLarge?.copyWith(color: colorScheme.onPrimary)),
+                      ],
+                    ),
+                    if (_savings > 0) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.savings, size: 16, color: Colors.green),
+                            const SizedBox(width: 4),
+                            Text(
+                              'You saved ₱${_savings.toStringAsFixed(2)}',
+                              style: textTheme.bodySmall?.copyWith(
+                                color: Colors.green,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),

@@ -4,6 +4,7 @@ import '../../../../core/models/product_model.dart';
 import '../../../../core/models/section_model.dart';
 import '../../../../core/models/category_model.dart';
 import '../../../../core/services/product_api_service.dart';
+import '../../../../core/utils/pricing_utils.dart';
 
 class ProductSectionWidget extends StatelessWidget {
   final SectionWithProducts section;
@@ -303,6 +304,15 @@ class _ProductTileState extends State<ProductTile> {
                   style: textTheme.bodyMedium?.copyWith(
                     color: Colors.green[700],
                     fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                // Premium Price
+                Text(
+                  'Premium: ₱ ${widget.product.premiumPrice.round()}',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: Colors.purple[700],
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 if (categoryName != null) ...[

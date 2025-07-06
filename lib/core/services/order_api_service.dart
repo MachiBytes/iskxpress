@@ -88,4 +88,76 @@ class OrderApiService {
       throw Exception('Failed to load active deliveries: ${response.statusCode}');
     }
   }
+
+  static Future<List<OrderModel>> getFinishedDeliveriesForPartner(int deliveryPartnerId) async {
+    String url = '${BaseApiService.baseUrl}/api/Order/delivery-partner/$deliveryPartnerId?isFinished=true';
+    if (kDebugMode) debugPrint('OrderApiService: GET $url');
+    final response = await http.get(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => OrderModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load finished deliveries: ${response.statusCode}');
+    }
+  }
+
+  static Future<List<OrderModel>> getOrdersForStall(int stallId) async {
+    String url = '${BaseApiService.baseUrl}/api/Order/stall/$stallId';
+    if (kDebugMode) debugPrint('OrderApiService: GET $url');
+    final response = await http.get(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => OrderModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load stall orders: ${response.statusCode}');
+    }
+  }
+
+  static Future<bool> updateOrderStatus(int orderId, int status) async {
+    String url = '${BaseApiService.baseUrl}/api/Order/$orderId/status';
+    if (kDebugMode) debugPrint('OrderApiService: PUT $url with status: $status');
+    
+    final response = await http.put(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+      body: json.encode({
+        'status': status,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      if (kDebugMode) debugPrint('OrderApiService: Successfully updated order status');
+      return true;
+    } else {
+      if (kDebugMode) debugPrint('OrderApiService: Failed to update order status: ${response.statusCode}');
+      throw Exception('Failed to update order status: ${response.statusCode}');
+    }
+  }
+
+  static Future<bool> rejectOrder(int orderId, String rejectionReason) async {
+    String url = '${BaseApiService.baseUrl}/api/Order/$orderId/reject';
+    if (kDebugMode) debugPrint('OrderApiService: PUT $url with rejectionReason: $rejectionReason');
+    
+    final response = await http.put(
+      Uri.parse(url),
+      headers: BaseApiService.jsonHeaders,
+      body: json.encode({
+        'rejectionReason': rejectionReason,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      if (kDebugMode) debugPrint('OrderApiService: Successfully rejected order');
+      return true;
+    } else {
+      if (kDebugMode) debugPrint('OrderApiService: Failed to reject order: ${response.statusCode}');
+      throw Exception('Failed to reject order: ${response.statusCode}');
+    }
+  }
 } 
