@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:iskxpress/core/constants/image_strings.dart';
+import 'package:iskxpress/presentation/pages/user_cart/user_cart_page.dart';
+import 'package:iskxpress/core/services/user_state_service.dart';
+import 'package:iskxpress/core/helpers/navigation_helper.dart';
 
 class DeliveryAppBar extends StatelessWidget implements PreferredSizeWidget {
   const DeliveryAppBar({super.key, required this.tabController});
@@ -37,7 +41,19 @@ class DeliveryAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: Icon(Icons.favorite, color: colorScheme.onPrimary),
           ),
           IconButton(
-            onPressed: null,
+            onPressed: () {
+              final userId = UserStateService().currentUser?.id;
+              if (kDebugMode) {
+                debugPrint('DeliveryAppBar: Cart pressed, userId: $userId');
+              }
+              if (userId != null) {
+                NavHelper.pushPageTo(context, UserCartPage(userId: userId));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('User not found. Please log in again.')),
+                );
+              }
+            },
             icon: Icon(Icons.shopping_cart, color: colorScheme.onPrimary),
           ),
         ],

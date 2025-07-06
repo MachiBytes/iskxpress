@@ -80,16 +80,6 @@ class YourDeliveryCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (statusText != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          statusText!,
-                          style: textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary, // Highlight status
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),
@@ -129,10 +119,21 @@ class YourDeliveryCard extends StatelessWidget {
             ),
             const SizedBox(height: 8), // Space before the button row
 
-            // Bottom Row: Fixed Action Buttons
+            // Bottom Row: Status and Action Button
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween, // Align buttons to the right
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                if (statusText != null)
+                  Text(
+                    statusText!,
+                    style: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colorScheme.primary, // Highlight status
+                    ),
+                  )
+                else
+                  const SizedBox.shrink(),
                 ElevatedButton(
                   onPressed: onManageDelivery,
                   style: ElevatedButton.styleFrom(
@@ -143,18 +144,6 @@ class YourDeliveryCard extends StatelessWidget {
                     minimumSize: Size.zero,
                   ),
                   child: const Text('Manage Delivery'),
-                ),
-                const SizedBox(width: 8), // Space between buttons
-                OutlinedButton(
-                  onPressed: onCancelDelivery,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: colorScheme.error, // Use error color for cancel
-                    side: BorderSide(color: colorScheme.error, width: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    textStyle: textTheme.labelSmall,
-                    minimumSize: Size.zero,
-                  ),
-                  child: const Text('Cancel Delivery'),
                 ),
               ],
             ),
