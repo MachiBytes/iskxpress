@@ -4,7 +4,6 @@ import '../../../../core/models/product_model.dart';
 import '../../../../core/models/section_model.dart';
 import '../../../../core/models/category_model.dart';
 import '../../../../core/services/product_api_service.dart';
-import '../../../../core/utils/pricing_utils.dart';
 
 class ProductSectionWidget extends StatelessWidget {
   final SectionWithProducts section;
