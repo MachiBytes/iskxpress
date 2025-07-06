@@ -57,10 +57,12 @@ class ApiService {
     required int vendorId,
     required String name,
     required String shortDescription,
+    bool hasDelivery = false,
   }) => StallApiService.createStall(
         vendorId: vendorId,
         name: name,
         shortDescription: shortDescription,
+        hasDelivery: hasDelivery,
       );
 
   /// Update stall information
@@ -72,6 +74,15 @@ class ApiService {
         stallId: stallId,
         name: name,
         shortDescription: shortDescription,
+      );
+
+  /// Update stall delivery availability
+  static Future<StallModel?> updateStallDeliveryAvailability({
+    required int stallId,
+    required bool hasDelivery,
+  }) => StallApiService.updateStallDeliveryAvailability(
+        stallId: stallId,
+        hasDelivery: hasDelivery,
       );
 
   /// Upload stall picture

@@ -8,7 +8,6 @@ class ProductModel {
   final String? createdAt;
   final String? updatedAt;
   final int availability; // 0 = available, 1 = sold out
-  final double? priceWithDelivery;
   final double? priceWithMarkup;
 
   // Default markup percentage (20% - you can adjust this value)
@@ -24,7 +23,6 @@ class ProductModel {
     this.createdAt,
     this.updatedAt,
     this.availability = 0,
-    this.priceWithDelivery,
     this.priceWithMarkup,
   });
 
@@ -49,7 +47,6 @@ class ProductModel {
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
       availability: json['availability'] ?? 0,
-      priceWithDelivery: json['priceWithDelivery'] != null ? (json['priceWithDelivery'] as num).toDouble() : null,
       priceWithMarkup: json['priceWithMarkup'] != null ? (json['priceWithMarkup'] as num).toDouble() : null,
     );
   }
@@ -65,7 +62,6 @@ class ProductModel {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'availability': availability,
-      'priceWithDelivery': priceWithDelivery,
       'priceWithMarkup': priceWithMarkup,
     };
   }
@@ -80,7 +76,6 @@ class ProductModel {
     String? createdAt,
     String? updatedAt,
     int? availability,
-    double? priceWithDelivery,
     double? priceWithMarkup,
   }) {
     return ProductModel(
@@ -93,7 +88,6 @@ class ProductModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       availability: availability ?? this.availability,
-      priceWithDelivery: priceWithDelivery ?? this.priceWithDelivery,
       priceWithMarkup: priceWithMarkup ?? this.priceWithMarkup,
     );
   }

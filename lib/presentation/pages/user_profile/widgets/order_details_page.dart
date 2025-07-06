@@ -179,8 +179,23 @@ class _OrderDetailsPageState extends State<OrderDetailsPage> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Total: ₱${_order!.totalPrice.ceil()}',
-          style: textTheme.titleMedium?.copyWith(color: colorScheme.onSurface),
+          'Subtotal: ₱${_order!.totalSellingPrice.toStringAsFixed(2)}',
+          style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+        ),
+        if (_order!.deliveryFee > 0) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Delivery Fee: ₱${_order!.deliveryFee.toStringAsFixed(2)}',
+            style: textTheme.bodyMedium?.copyWith(color: colorScheme.onSurface),
+          ),
+        ],
+        const SizedBox(height: 8),
+        Text(
+          'Total: ₱${_order!.totalPrice.toStringAsFixed(2)}',
+          style: textTheme.titleMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         if (_order!.deliveryAddress != null) ...[
           const SizedBox(height: 8),

@@ -10,7 +10,7 @@ class StallCard extends StatelessWidget {
     this.onPressed, // Add an optional onPressed callback
   });
 
-  final String imagePath;
+  final String? imagePath; // Make this nullable
   final String stallName;
   final String stallNumber;
   final String stallDescription;
@@ -80,13 +80,18 @@ class StallCard extends StatelessWidget {
   }
 
   Widget _buildStallImage(ColorScheme colorScheme) {
+    // If imagePath is null, show stall icon
+    if (imagePath == null) {
+      return _buildFallbackImage(colorScheme);
+    }
+    
     // Check if imagePath is a network URL
-    final bool isNetworkImage = imagePath.startsWith('http://') || imagePath.startsWith('https://');
+    final bool isNetworkImage = imagePath!.startsWith('http://') || imagePath!.startsWith('https://');
     
     if (isNetworkImage) {
       // Use Image.network for network URLs
       return Image.network(
-        imagePath,
+        imagePath!,
         height: 120,
         width: 120,
         fit: BoxFit.cover,
@@ -112,7 +117,7 @@ class StallCard extends StatelessWidget {
     } else {
       // Use Image.asset for local assets
       return Image.asset(
-        imagePath,
+        imagePath!,
         height: 120,
         width: 120,
         fit: BoxFit.cover,
@@ -132,7 +137,7 @@ class StallCard extends StatelessWidget {
           color: colorScheme.surfaceContainerHighest,
         ),
         child: Icon(
-          Icons.restaurant,
+          Icons.store,
           color: colorScheme.onSurface.withOpacity(0.5),
           size: 40,
         ),

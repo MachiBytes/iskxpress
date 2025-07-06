@@ -28,7 +28,6 @@ class CartItemModel {
       sectionId: 0, // Not provided in cart response
       imageUrl: json['productPictureUrl'],
       availability: json['productAvailability'] ?? 0,
-      priceWithDelivery: json['productPriceWithDelivery'] != null ? (json['productPriceWithDelivery'] as num).toDouble() : null,
       priceWithMarkup: json['productPriceWithMarkup'] != null ? (json['productPriceWithMarkup'] as num).toDouble() : null,
     );
 

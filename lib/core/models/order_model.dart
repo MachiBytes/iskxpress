@@ -7,6 +7,8 @@ class OrderModel {
   final int fulfillmentMethod;
   final String? deliveryAddress;
   final String? notes;
+  final double totalSellingPrice;
+  final double deliveryFee;
   final double totalPrice;
   final DateTime createdAt;
   final List<OrderItemModel> items;
@@ -20,6 +22,8 @@ class OrderModel {
     required this.fulfillmentMethod,
     this.deliveryAddress,
     this.notes,
+    required this.totalSellingPrice,
+    required this.deliveryFee,
     required this.totalPrice,
     required this.createdAt,
     required this.items,
@@ -35,6 +39,8 @@ class OrderModel {
       fulfillmentMethod: json['fulfillmentMethod'] ?? 0,
       deliveryAddress: json['deliveryAddress'],
       notes: json['notes'],
+      totalSellingPrice: (json['totalSellingPrice'] ?? 0.0).toDouble(),
+      deliveryFee: (json['deliveryFee'] ?? 0.0).toDouble(),
       totalPrice: (json['totalPrice'] ?? 0.0).toDouble(),
       createdAt: DateTime.parse(json['createdAt']),
       items: (json['orderItems'] as List<dynamic>? ?? [])

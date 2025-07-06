@@ -113,6 +113,7 @@ class StallApiService {
     required int vendorId,
     required String name,
     required String shortDescription,
+    bool hasDelivery = false,
   }) async {
     try {
       final body = json.encode({
@@ -185,6 +186,39 @@ class StallApiService {
       }
     } catch (e) {
       if (kDebugMode) debugPrint('STALL_API: Error updating stall: $e');
+      return null;
+    }
+  }
+
+  // Update stall delivery availability
+  static Future<StallModel?> updateStallDeliveryAvailability({
+    required int stallId,
+    required bool hasDelivery,
+  }) async {
+    try {
+      if (kDebugMode) debugPrint('STALL_API: Updating delivery availability for stall $stallId to $hasDelivery');
+
+      final response = await http.put(
+        Uri.parse('${BaseApiService.baseUrl}/api/stalls/$stallId/delivery-availability?deliveryAvailable=$hasDelivery'),
+        headers: BaseApiService.jsonHeaders,
+      );
+
+      if (kDebugMode) debugPrint('STALL_API: Update delivery availability response - Status: ${response.statusCode}, Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        try {
+          final responseData = json.decode(response.body);
+          if (kDebugMode) debugPrint('STALL_API: Successfully parsed updated delivery availability data: $responseData');
+          return StallModel.fromJson(responseData);
+        } catch (parseError) {
+          if (kDebugMode) debugPrint('STALL_API: Error parsing updated delivery availability JSON: $parseError');
+          return null;
+        }
+      } else {
+        throw Exception('Failed to update delivery availability: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('STALL_API: Error updating delivery availability: $e');
       return null;
     }
   }

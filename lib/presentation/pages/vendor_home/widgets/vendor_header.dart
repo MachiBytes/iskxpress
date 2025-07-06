@@ -21,6 +21,7 @@ class _VendorHeaderState extends State<VendorHeader> {
   
   bool _isEditing = false;
   bool _isCreating = false;
+  bool _tempHasDelivery = false; // Temporary variable for editing delivery availability
 
   @override
   void initState() {
@@ -43,6 +44,7 @@ class _VendorHeaderState extends State<VendorHeader> {
     if (stall != null) {
       _nameController.text = stall.name;
       _descriptionController.text = stall.shortDescription;
+      _tempHasDelivery = stall.deliveryAvailable; // Set temporary delivery availability
     }
   }
 
@@ -180,12 +182,27 @@ class _VendorHeaderState extends State<VendorHeader> {
       return;
     }
 
+    // First update the basic stall info
     final success = await _stallStateService.updateStallInfo(
       name: name,
       shortDescription: description,
     );
 
     if (success) {
+      // Then update delivery availability if it changed
+      final currentStall = _stallStateService.currentStall;
+      if (currentStall != null && currentStall.deliveryAvailable != _tempHasDelivery) {
+        final deliverySuccess = await _stallStateService.updateDeliveryAvailability(_tempHasDelivery);
+        if (!deliverySuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Stall info updated but delivery availability failed to update'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+
       setState(() {
         _isEditing = false;
       });
@@ -209,7 +226,7 @@ class _VendorHeaderState extends State<VendorHeader> {
     setState(() {
       _isEditing = false;
     });
-    _updateControllers(); // Reset controllers to original values
+    _updateControllers(); // Reset controllers to original values including delivery availability
   }
 
   Future<void> _createStall() async {
@@ -241,6 +258,7 @@ class _VendorHeaderState extends State<VendorHeader> {
       vendorId: currentUser.id,
       name: name,
       shortDescription: description,
+      hasDelivery: _tempHasDelivery,
     );
 
     if (success) {
@@ -272,6 +290,7 @@ class _VendorHeaderState extends State<VendorHeader> {
     });
     _nameController.clear();
     _descriptionController.clear();
+    _tempHasDelivery = false; // Reset delivery availability
   }
 
   @override
@@ -427,6 +446,54 @@ class _VendorHeaderState extends State<VendorHeader> {
                         color: colorScheme.onPrimary.withOpacity(0.9),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    // Delivery Availability Toggle
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.delivery_dining,
+                          color: colorScheme.onPrimary.withOpacity(0.8),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Has Delivery',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onPrimary.withOpacity(0.9),
+                          ),
+                        ),
+                        const Spacer(),
+                        Switch(
+                          value: stall.deliveryAvailable,
+                          onChanged: (value) async {
+                            final success = await _stallStateService.updateDeliveryAvailability(value);
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    value ? 'Delivery enabled' : 'Delivery disabled',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Failed to update delivery availability'),
+                                  backgroundColor: Colors.red,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          activeColor: colorScheme.onPrimary,
+                          activeTrackColor: colorScheme.onPrimary.withOpacity(0.3),
+                          inactiveThumbColor: colorScheme.onPrimary.withOpacity(0.5),
+                          inactiveTrackColor: colorScheme.onPrimary.withOpacity(0.1),
+                        ),
+                      ],
+                    ),
                   ],
     );
   }
@@ -479,6 +546,37 @@ class _VendorHeaderState extends State<VendorHeader> {
               borderSide: BorderSide(color: colorScheme.onPrimary),
             ),
           ),
+        ),
+        const SizedBox(height: 10),
+        // Delivery Availability Toggle in Edit Mode
+        Row(
+          children: [
+            Icon(
+              Icons.delivery_dining,
+              color: colorScheme.onPrimary.withOpacity(0.8),
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Has Delivery',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onPrimary.withOpacity(0.9),
+              ),
+            ),
+            const Spacer(),
+            Switch(
+              value: _tempHasDelivery,
+              onChanged: (value) {
+                setState(() {
+                  _tempHasDelivery = value;
+                });
+              },
+              activeColor: colorScheme.onPrimary,
+              activeTrackColor: colorScheme.onPrimary.withOpacity(0.3),
+              inactiveThumbColor: colorScheme.onPrimary.withOpacity(0.5),
+              inactiveTrackColor: colorScheme.onPrimary.withOpacity(0.1),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         Row(
@@ -621,6 +719,37 @@ class _VendorHeaderState extends State<VendorHeader> {
               borderSide: BorderSide(color: colorScheme.onPrimary),
             ),
           ),
+        ),
+        const SizedBox(height: 15),
+        // Delivery Availability Toggle in Create Mode
+        Row(
+          children: [
+            Icon(
+              Icons.delivery_dining,
+              color: colorScheme.onPrimary.withOpacity(0.8),
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Has Delivery',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onPrimary.withOpacity(0.9),
+              ),
+            ),
+            const Spacer(),
+            Switch(
+              value: _tempHasDelivery,
+              onChanged: (value) {
+                setState(() {
+                  _tempHasDelivery = value;
+                });
+              },
+              activeColor: colorScheme.onPrimary,
+              activeTrackColor: colorScheme.onPrimary.withOpacity(0.3),
+              inactiveThumbColor: colorScheme.onPrimary.withOpacity(0.5),
+              inactiveTrackColor: colorScheme.onPrimary.withOpacity(0.1),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
         Row(

@@ -36,20 +36,6 @@ class VendorGeneralActions extends StatelessWidget {
                   ],
                 ),
               ),
-              Row(
-                children: [
-                  Icon(Icons.help_outline),
-                  const SizedBox(width: 8),
-                  Text('Help & Support'),
-                ],
-              ),
-              Row(
-                children: [
-                  Icon(Icons.info_outline),
-                  const SizedBox(width: 8),
-                  Text('About'),
-                ],
-              ),
             ],
           ),
         ),

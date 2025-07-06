@@ -80,6 +80,43 @@ class StallStateService with ChangeNotifier {
     }
   }
 
+  // Update delivery availability
+  Future<bool> updateDeliveryAvailability(bool hasDelivery) async {
+    if (_currentStall == null) {
+      if (kDebugMode) debugPrint('StallStateService: Cannot update delivery availability - no current stall');
+      return false;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      if (kDebugMode) debugPrint('StallStateService: Updating delivery availability for stall ${_currentStall!.id} to $hasDelivery');
+      final updatedStall = await ApiService.updateStallDeliveryAvailability(
+        stallId: _currentStall!.id,
+        hasDelivery: hasDelivery,
+      );
+
+      if (updatedStall != null) {
+        _currentStall = updatedStall;
+        if (kDebugMode) debugPrint('StallStateService: Successfully updated delivery availability');
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        if (kDebugMode) debugPrint('StallStateService: Failed to update delivery availability');
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('StallStateService: Error updating delivery availability: $e');
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Update stall picture
   Future<bool> updateStallPicture(File imageFile) async {
     if (_currentStall == null) {
@@ -129,6 +166,7 @@ class StallStateService with ChangeNotifier {
     required int vendorId,
     required String name,
     required String shortDescription,
+    bool hasDelivery = false,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -139,10 +177,20 @@ class StallStateService with ChangeNotifier {
         vendorId: vendorId,
         name: name,
         shortDescription: shortDescription,
+        hasDelivery: hasDelivery,
       );
 
       if (newStall != null) {
         _currentStall = newStall;
+        
+        // If delivery availability is requested, update it separately
+        if (hasDelivery) {
+          final deliverySuccess = await updateDeliveryAvailability(hasDelivery);
+          if (!deliverySuccess) {
+            if (kDebugMode) debugPrint('StallStateService: Failed to set delivery availability after stall creation');
+          }
+        }
+        
         if (kDebugMode) debugPrint('StallStateService: Successfully created stall: ${newStall.name}');
         _isLoading = false;
         notifyListeners();

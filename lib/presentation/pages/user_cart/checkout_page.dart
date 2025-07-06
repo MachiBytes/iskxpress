@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iskxpress/core/models/cart_item_model.dart';
 import 'package:iskxpress/core/services/cart_api_service.dart';
-import 'package:iskxpress/core/services/user_state_service.dart';
 import 'package:iskxpress/presentation/pages/user_home/user_home_page.dart';
 
 class CheckoutPage extends StatefulWidget {
@@ -22,12 +21,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   double get _totalPrice {
     double total = 0;
+    Set<int> uniqueStalls = {};
+    
     for (final item in widget.cartItems) {
-      final price = _fulfillmentMethod == 1 
-          ? (item.product.priceWithDelivery ?? item.product.sellingPrice)
-          : (item.product.priceWithMarkup ?? item.product.sellingPrice);
+      // Use priceWithMarkup for all items
+      final price = item.product.priceWithMarkup ?? item.product.sellingPrice;
       total += price * item.quantity;
+      
+      // Track unique stalls for delivery fee calculation
+      uniqueStalls.add(item.stallId);
     }
+    
+    // Add delivery fee: ₱10 per unique stall
+    if (_fulfillmentMethod == 1) {
+      total += uniqueStalls.length * 10;
+    }
+    
     return total;
   }
 
@@ -128,7 +137,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Delivery fee: ₱10 per item',
+                            'Delivery fee: ₱10 per stall',
                             style: textTheme.bodyMedium?.copyWith(
                               color: Colors.orange[800],
                               fontWeight: FontWeight.w500,

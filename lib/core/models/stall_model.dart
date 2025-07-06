@@ -10,6 +10,7 @@ class StallModel {
   final String? createdAt;
   final String? updatedAt;
   final List<CategoryModel> categories;
+  final bool deliveryAvailable;
 
   StallModel({
     required this.id,
@@ -21,6 +22,7 @@ class StallModel {
     this.createdAt,
     this.updatedAt,
     this.categories = const [],
+    this.deliveryAvailable = false,
   });
 
   factory StallModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class StallModel {
       createdAt: json['createdAt'],
       updatedAt: json['updatedAt'],
       categories: (json['categories'] as List<dynamic>?)?.map((cat) => CategoryModel.fromJson(cat)).toList() ?? [],
+      deliveryAvailable: json['deliveryAvailable'] ?? false,
     );
   }
 
@@ -48,6 +51,7 @@ class StallModel {
       'createdAt': createdAt,
       'updatedAt': updatedAt,
       'categories': categories.map((cat) => cat.toJson()).toList(),
+      'deliveryAvailable': deliveryAvailable,
     };
   }
 
@@ -61,6 +65,7 @@ class StallModel {
     String? createdAt,
     String? updatedAt,
     List<CategoryModel>? categories,
+    bool? deliveryAvailable,
   }) {
     return StallModel(
       id: id ?? this.id,
@@ -72,6 +77,7 @@ class StallModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       categories: categories ?? this.categories,
+      deliveryAvailable: deliveryAvailable ?? this.deliveryAvailable,
     );
   }
 } 

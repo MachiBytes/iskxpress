@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iskxpress/presentation/pages/user_profile/widgets/app_logo.dart';
 import 'package:iskxpress/presentation/pages/user_profile/widgets/logout_button.dart';
-import 'package:iskxpress/presentation/pages/vendor_profile/widgets/vendor_statistics.dart';
 import 'package:iskxpress/presentation/pages/vendor_profile/widgets/vendor_general_actions.dart';
 
 class VendorProfileBottomSection extends StatelessWidget {
@@ -26,8 +25,6 @@ class VendorProfileBottomSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                VendorStatistics(),
-                const SizedBox(height: 20),
                 VendorGeneralActions(),
                 const SizedBox(height: 32),
                 LogoutButton(),
